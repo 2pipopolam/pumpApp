@@ -8,7 +8,22 @@ interface SearchBarProps {
 
 const SearchBar: React.FC<SearchBarProps> = ({ searchTerm, setSearchTerm, isDarkMode }) => {
   return (
-    <div className="relative flex-grow">
+    <div className="relative">
+      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <svg
+          className={`w-5 h-5 ${
+            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+          }`}
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+      </div>
       <input
         type="text"
         placeholder="Поиск по постам, типу тренировки или никнейму"
@@ -18,19 +33,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ searchTerm, setSearchTerm, isDark
           isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-900'
         } focus:outline-none focus:ring-2 focus:ring-indigo-500`}
       />
-      <svg
-        className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
-          isDarkMode ? 'text-gray-400' : 'text-gray-500'
-        }`}
-        fill="none"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-      </svg>
     </div>
   );
 };
