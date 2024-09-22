@@ -1,8 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 interface UserData {
   nickname: string;
   profilePicture: string;
+}
+
+interface MediaItem {
+  type: 'image' | 'video';
+  url: string;
 }
 
 interface PostData {
@@ -10,7 +15,7 @@ interface PostData {
   title: string;
   type: string;
   description: string;
-  media: string[];
+  media: MediaItem[];
   views: number;
 }
 
@@ -24,7 +29,10 @@ function App() {
       title: 'Название поста',
       type: 'Тип тренировки',
       description: 'Описание тренировки. Здесь может быть довольно длинный текст, описывающий детали тренировки.',
-      media: ['https://via.placeholder.com/500', 'https://via.placeholder.com/500', 'https://via.placeholder.com/500', 'https://via.placeholder.com/500'],
+      media: [
+        { type: 'image', url: 'https://via.placeholder.com/500' },
+        { type: 'video', url: 'https://www.w3schools.com/html/mov_bbb.mp4' }
+      ],
       views: 1234,
     }
   ]);
@@ -33,6 +41,8 @@ function App() {
   const [editingPost, setEditingPost] = useState<PostData | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [postToDelete, setPostToDelete] = useState<number | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
@@ -95,10 +105,52 @@ function App() {
 
   const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (editingPost && e.target.value) {
-      setEditingPost({ ...editingPost, media: [...editingPost.media, e.target.value] });
+      const newMedia: MediaItem = { type: 'image', url: e.target.value };
+      setEditingPost({ ...editingPost, media: [...editingPost.media, newMedia] });
       e.target.value = '';
     }
   };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (editingPost && e.target.files) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const newMedia: MediaItem = {
+          type: file.type.startsWith('image/') ? 'image' : 'video',
+          url: reader.result as string
+        };
+        setEditingPost({ ...editingPost, media: [...editingPost.media, newMedia] });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (editingPost && e.dataTransfer.files) {
+      const file = e.dataTransfer.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const newMedia: MediaItem = {
+          type: file.type.startsWith('image/') ? 'image' : 'video',
+          url: reader.result as string
+        };
+        setEditingPost({ ...editingPost, media: [...editingPost.media, newMedia] });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const filteredPosts = posts.filter(post => 
+    post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    post.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    userData.nickname.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'}`}>
@@ -115,7 +167,9 @@ function App() {
             <div className="relative flex-grow">
               <input
                 type="text"
-                placeholder="Введите название поста либо тип тренеровки или имя пользователя"
+                placeholder="Поиск по постам, типу тренировки или никнейму"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className={`w-full py-2 pl-10 pr-4 rounded-full ${
                   isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-900'
                 } focus:outline-none focus:ring-2 focus:ring-indigo-500`}
@@ -146,8 +200,8 @@ function App() {
                 +
               </button>
             </div>
-            
-            {posts.map(post => (
+
+            {filteredPosts.map(post => (
               <div key={post.id} className={`rounded-lg shadow-md p-6 mb-8 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} relative`}>
                 <div className={`rounded-lg p-6 mb-6 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} relative`}>
                   <button className={`absolute top-2 left-2 ${buttonClass}`} aria-label="Редактировать пост" onClick={() => startEditing(post)}>
@@ -159,14 +213,18 @@ function App() {
                   <h1 className="text-3xl font-bold text-center mb-10 text-indigo-600">{post.title}</h1>
                   <p className={`text-xl text-center mb-7 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{post.type}</p>
                   <p className={`text-lg text-center mb-10 px-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{post.description}</p>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-1 gap-10">
-                    {post.media.map((url, index) => (
-                      <img key={index} src={url} alt={`Media ${index + 1}`} className="w-full h-auto rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300" />
+                    {post.media.map((item, index) => (
+                      item.type === 'image' ? (
+                        <img key={index} src={item.url} alt={`Media ${index + 1}`} className="w-full h-auto rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300" />
+                      ) : (
+                        <video key={index} src={item.url} controls className="w-full h-auto rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300" />
+                      )
                     ))}
                   </div>
                 </div>
-                
+
                 <div className="text-right">
                   <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Просмотры: {post.views}</p>
                 </div>
@@ -247,9 +305,49 @@ function App() {
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                 />
               </div>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {editingPost.media.map((url, index) => (
-                  <img key={index} src={url} alt={`Media ${index + 1}`} className="w-20 h-20 object-cover rounded" />
+
+              <div 
+                className="mb-4 p-4 border-2 border-dashed border-gray-300 rounded-md"
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+              >
+                <p className="text-center text-gray-500 mb-2">Перетащите файлы сюда или</p>
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  >
+                    Выберите файлы
+                  </button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    accept="image/*,video/*"
+                    className="hidden"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                {editingPost.media.map((item, index) => (
+                  <div key={index} className="relative">
+                    {item.type === 'image' ? (
+                      <img src={item.url} alt={`Media ${index + 1}`} className="w-full h-32 object-cover rounded" />
+                    ) : (
+                      <video src={item.url} className="w-full h-32 object-cover rounded" />
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newMedia = editingPost.media.filter((_, i) => i !== index);
+                        setEditingPost({ ...editingPost, media: newMedia });
+                      }}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                    >
+                      ×
+                    </button>
+                  </div>
                 ))}
               </div>
             </form>
