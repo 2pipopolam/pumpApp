@@ -29,6 +29,7 @@ function App() {
     }
   ]);
   const [isEditing, setIsEditing] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [editingPost, setEditingPost] = useState<PostData | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [postToDelete, setPostToDelete] = useState<number | null>(null);
@@ -50,31 +51,53 @@ function App() {
 
   const startEditing = (post: PostData) => {
     setIsEditing(true);
-    setEditingPost(post);
+    setEditingPost({ ...post });
   };
 
-  const saveEditedPost = (editedPost: PostData) => {
-    setPosts(posts.map(post => post.id === editedPost.id ? editedPost : post));
-    setIsEditing(false);
-    setEditingPost(null);
+  const saveEditedPost = () => {
+    if (editingPost) {
+      setPosts(posts.map(post => post.id === editingPost.id ? editingPost : post));
+      setIsEditing(false);
+      setEditingPost(null);
+    }
   };
 
   const addNewPost = () => {
-    const newPost: PostData = {
+    setIsCreating(true);
+    setEditingPost({
       id: Date.now(),
-      title: 'Новый пост',
-      type: 'Тип тренировки',
-      description: 'Описание новой тренировки',
+      title: '',
+      type: '',
+      description: '',
       media: [],
       views: 0
-    };
-    setPosts([...posts, newPost]);
-    startEditing(newPost);
+    });
+  };
+
+  const saveNewPost = () => {
+    if (editingPost) {
+      setPosts([...posts, editingPost]);
+      setIsCreating(false);
+      setEditingPost(null);
+    }
   };
 
   const showDeleteConfirmation = (id: number) => {
     setPostToDelete(id);
     setShowDeleteDialog(true);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (editingPost) {
+      setEditingPost({ ...editingPost, [e.target.name]: e.target.value });
+    }
+  };
+
+  const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (editingPost && e.target.value) {
+      setEditingPost({ ...editingPost, media: [...editingPost.media, e.target.value] });
+      e.target.value = '';
+    }
   };
 
   return (
@@ -176,23 +199,76 @@ function App() {
         </div>
       )}
 
-      {isEditing && editingPost && (
+      {(isEditing || isCreating) && editingPost && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className={`bg-white p-6 rounded-lg ${isDarkMode ? 'text-black' : ''}`}>
-            <h2 className="text-xl font-bold mb-4">Редактирование поста</h2>
-            {/* Add form fields for editing here */}
+          <div className={`bg-white p-6 rounded-lg ${isDarkMode ? 'text-black' : ''} w-full max-w-md`}>
+            <h2 className="text-xl font-bold mb-4">{isCreating ? 'Создание нового поста' : 'Редактирование поста'}</h2>
+            <form>
+              <div className="mb-4">
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700">Название поста</label>
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
+                  value={editingPost.title}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="type" className="block text-sm font-medium text-gray-700">Тип тренировки</label>
+                <input
+                  type="text"
+                  id="type"
+                  name="type"
+                  value={editingPost.type}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700">Описание тренировки</label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={editingPost.description}
+                  onChange={handleInputChange}
+                  rows={4}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                ></textarea>
+              </div>
+              <div className="mb-4">
+                <label htmlFor="media" className="block text-sm font-medium text-gray-700">Добавить медиа (URL)</label>
+                <input
+                  type="text"
+                  id="media"
+                  name="media"
+                  onChange={handleMediaChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {editingPost.media.map((url, index) => (
+                  <img key={index} src={url} alt={`Media ${index + 1}`} className="w-20 h-20 object-cover rounded" />
+                ))}
+              </div>
+            </form>
             <div className="flex justify-end mt-4">
               <button
                 className="mr-2 px-4 py-2 rounded bg-gray-300 hover:bg-gray-400"
-                onClick={() => setIsEditing(false)}
+                onClick={() => {
+                  setIsEditing(false);
+                  setIsCreating(false);
+                  setEditingPost(null);
+                }}
               >
                 Отмена
               </button>
               <button
                 className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600"
-                onClick={() => saveEditedPost(editingPost)}
+                onClick={isCreating ? saveNewPost : saveEditedPost}
               >
-                Сохранить
+                {isCreating ? 'Создать' : 'Сохранить'}
               </button>
             </div>
           </div>
