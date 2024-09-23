@@ -1,24 +1,21 @@
 from django.contrib import admin
-from .models import Profile, UserTraining
+from .models import Profile, Post
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ['user' , 'photo' , 'video' , 'training_post']
-    list_filter = ['user' ,'training_post' ,'photo' , 'video']
-    search_fields = ['training_post', 'photo' , 'video']
-    #prepopulated_fields = {'training_post'}
+    list_display = ['user', 'photo']
+    list_filter = ['user']
+    search_fields = ['user__username']
     raw_id_fields = ['user']
-    #date_hierarchy = 'date'
-    ordering = ['user', 'training_post']
+    ordering = ['user']
     show_facets = admin.ShowFacets.ALWAYS
 
-
-@admin.register(UserTraining)
-class UserTrainingAdmin(admin.ModelAdmin):
-    list_display = ['user', 'date', 'time', 'training_type', 'description' , 'duration']
-    list_filter = ['user', 'date', 'training_type','duration']
-    search_fields = ['user', 'training_type']
-    raw_id_fields = ['user']
-    date_hierarchy = 'date'
-    ordering = ['date', 'time','training_type']
+@admin.register(Post)
+class PostAdmin(admin.ModelAdmin):
+    list_display = ['title', 'profile', 'training_type', 'created_at', 'views']
+    list_filter = ['training_type', 'created_at']
+    search_fields = ['title', 'description', 'profile__user__username']
+    raw_id_fields = ['profile']
+    date_hierarchy = 'created_at'
+    ordering = ['-created_at']
     show_facets = admin.ShowFacets.ALWAYS

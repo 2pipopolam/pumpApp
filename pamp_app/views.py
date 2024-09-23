@@ -1,32 +1,51 @@
-from django.shortcuts import render
+from django.shortcuts import render,get_object_or_404
 from rest_framework import viewsets, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from .models import Profile
-from .models import UserTraining
-from .serializers import YourModelSerializer
+from .models import Profile, Post
+from .serializers import ProfileSerializer, PostSerializer
 
 
-class YourModelViewSet(viewsets.ModelViewSet):
+
+def post_list(request):
+    posts = Post.objects.all()
+    return render(request, 'pamp_app/post_list.html', {'posts': posts})
+
+def post_detail(request, id):
+    post = get_object_or_404(Post, id=id)
+    return render(request, 'pamp_app/post_detail.html', {'post': post})
+
+
+
+class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
-    serializer_class = YourModelSerializer
+    serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
 
+class PostViewSet(viewsets.ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
+    def perform_create(self, serializer):
+        serializer.save(profile=self.request.user.profile)
 
 
 @api_view(['GET'])
-def some_custom_api_view(request):
-    # Ваша логика здесь
-    return Response({"message": "This is a custom API view"})
+def user_profile(request):
+    profile = request.user.profile
+    serializer = ProfileSerializer(profile)
+    return Response(serializer.data)
 
 
+@api_view(['GET'])
+def user_posts(request):
+    posts = Post.objects.filter(profile=request.user.profile)
+    serializer = PostSerializer(posts, many=True)
+    return Response(serializer.data)
 
 
-
-
-
-# Если вам нужно отрендерить React-приложение
+# Render React app
 def index(request):
     return render(request, 'index.html')

@@ -14,10 +14,22 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
+
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from pamp_app import views
+
+router = DefaultRouter()
+router.register(r'profiles', views.ProfileViewSet)
+router.register(r'posts', views.PostViewSet)
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('pamp_app',include('pamp_app.urls',namespace='pamp_app')),
+    path('admin/', admin.site.urls),  # Добавьте эту строку, если её нет
+    path('api/', include(router.urls)),
+    path('api/user-profile/', views.user_profile, name='user-profile'),
+    path('api/user-posts/', views.user_posts, name='user-posts'),
+    path('', include('pamp_app.urls')),  # Это включает urls.py вашего приложения
+    path('', views.index, name='index'),
 ]
