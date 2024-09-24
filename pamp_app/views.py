@@ -1,3 +1,5 @@
+import os
+from django.conf import settings
 from django.shortcuts import render,get_object_or_404
 from rest_framework import viewsets, permissions
 from rest_framework.response import Response
@@ -5,6 +7,9 @@ from rest_framework.decorators import api_view
 from .models import Profile, Post
 from .serializers import ProfileSerializer, PostSerializer
 
+# from rest_framework import status
+# from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 
 
 def post_list(request):
@@ -29,7 +34,26 @@ class PostViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(profile=self.request.user.profile)
+        instance = serializer.save(profile=self.request.user.profile)
+        if instance.photo:
+            print(f"Photo saved at: {instance.photo.path}")
+            print(f"Photo URL: {instance.photo.url}")
+            print(f"File exists: {os.path.exists(os.path.join(settings.MEDIA_ROOT, instance.photo.name))}")
+
+
+
+
+# class PostCreateAPIView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request, format=None):
+#         serializer = PostSerializer(data=request.data, context={'request': request})
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 @api_view(['GET'])

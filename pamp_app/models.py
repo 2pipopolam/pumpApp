@@ -1,16 +1,17 @@
 from django.db import models
 from django.core.validators import FileExtensionValidator
 from django.conf import settings
-
+from .fields import CustomFileField
 
 class Profile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE
     )
-    photo = models.ImageField(
+ 
+    avatar = models.ImageField(
         blank=True,
-        upload_to='users/%Y/%m/%d/',
+        upload_to='user_avatars/%Y/%m/%d/',
     )
 
     def __str__(self):
@@ -18,26 +19,24 @@ class Profile(models.Model):
 
 
 class Post(models.Model):
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='posts')
     title = models.CharField(max_length=200)
+    photo = models.ImageField(upload_to='post_images/%Y/%m/%d/', blank=True, null=True)
     training_type = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
-    photo = models.ImageField(
-        blank=True,
-        upload_to='posts/%Y/%m/%d/',
-    )
-    video = models.FileField(
-        upload_to='videos/%Y/%m/%d/', 
-        blank=True, 
-        null=True,
-        validators=[FileExtensionValidator(allowed_extensions=['mp4', 'avi', 'mov', 'wmv'])]
-    )
-    views = models.PositiveIntegerField(default=0)
+    description = models.TextField()
+    video = models.FileField(upload_to='post_videos/%Y/%m/%d/', blank=True, null=True)
+    views = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    profile = models.ForeignKey('Profile', on_delete=models.CASCADE)
 
     def __str__(self):
-        return f'{self.title} by {self.profile.user.username}'
+        return self.title
+
+
+    # photo = models.ImageField(
+    #     blank=True,
+    #     upload_to='posts/%Y/%m/%d/',
+    # )
 
 
 # class UserTraining(models.Model):

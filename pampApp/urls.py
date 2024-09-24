@@ -18,6 +18,8 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
 from pamp_app import views
 
@@ -26,10 +28,13 @@ router.register(r'profiles', views.ProfileViewSet)
 router.register(r'posts', views.PostViewSet)
 
 urlpatterns = [
-    path('admin/', admin.site.urls),  # Добавьте эту строку, если её нет
+    path('admin/', admin.site.urls),     
     path('api/', include(router.urls)),
     path('api/user-profile/', views.user_profile, name='user-profile'),
     path('api/user-posts/', views.user_posts, name='user-posts'),
-    path('', include('pamp_app.urls')),  # Это включает urls.py вашего приложения
+    path('', include('pamp_app.urls')),
     path('', views.index, name='index'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

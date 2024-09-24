@@ -3,7 +3,7 @@ from .models import Profile, Post
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ['user', 'photo']
+    list_display = ['user', 'avatar']
     list_filter = ['user']
     search_fields = ['user__username']
     raw_id_fields = ['user']
@@ -12,7 +12,7 @@ class ProfileAdmin(admin.ModelAdmin):
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ['title', 'profile', 'training_type', 'created_at', 'views']
+    list_display = ['profile', 'title','training_type','description','created_at', 'views']
     list_filter = ['training_type', 'created_at']
     search_fields = ['title', 'description', 'profile__user__username']
     raw_id_fields = ['profile']

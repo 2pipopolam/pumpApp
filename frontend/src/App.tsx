@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { PostData, UserData, MediaItem } from './types';
+import React, { useState, useEffect } from 'react';
+import { Post, UserData } from './types';
+import { getPosts, createPost, updatePost, deletePost } from './services/api';
 import DarkModeToggle from './components/DarkModeToggle';
 import SearchBar from './components/SearchBar';
 import PostList from './components/PostList';
@@ -8,22 +9,12 @@ import EditPostDialog from './components/EditPostDialog';
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [posts, setPosts] = useState<PostData[]>([
-    {
-      id: 1,
-      title: 'Название поста',
-      type: 'Тип тренировки',
-      description: 'Описание тренировки. Здесь может быть довольно длинный текст, описывающий детали тренировки.',
-      media: [
-        { type: 'image', url: 'https://via.placeholder.com/500' },
-        { type: 'video', url: 'https://www.w3schools.com/html/mov_bbb.mp4' }
-      ],
-      views: 1234,
-    }
-  ]);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [editingPost, setEditingPost] = useState<PostData | null>(null);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [postToDelete, setPostToDelete] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,46 +22,91 @@ function App() {
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
   const userData: UserData = {
+    id: 1,
     nickname: 'UserNickname',
     profilePicture: 'https://via.placeholder.com/500',
   };
 
-  const deletePost = (id: number) => {
-    setPosts(posts.filter(post => post.id !== id));
-    setShowDeleteDialog(false);
-    setPostToDelete(null);
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const fetchPosts = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await getPosts();
+      setPosts(response.data);
+    } catch (err) {
+      setError('Failed to fetch posts. Please try again later.');
+      console.error('Error fetching posts:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const startEditing = (post: PostData) => {
+  const handleDeletePost = async (id: number) => {
+    try {
+      await deletePost(id);
+      setPosts(posts.filter(post => post.id !== id));
+      setShowDeleteDialog(false);
+      setPostToDelete(null);
+    } catch (err) {
+      setError('Failed to delete post. Please try again.');
+      console.error('Error deleting post:', err);
+    }
+  };
+
+  const handleStartEditing = (post: Post) => {
     setIsEditing(true);
     setEditingPost({ ...post });
   };
 
-  const saveEditedPost = () => {
+  const handleSaveEditedPost = async () => {
     if (editingPost) {
-      setPosts(posts.map(post => post.id === editingPost.id ? editingPost : post));
-      setIsEditing(false);
-      setEditingPost(null);
+      try {
+        const response = await updatePost(editingPost.id, editingPost);
+        setPosts(posts.map(post => post.id === editingPost.id ? response.data : post));
+        setIsEditing(false);
+        setEditingPost(null);
+      } catch (err) {
+        setError('Failed to update post. Please try again.');
+        console.error('Error updating post:', err);
+      }
     }
   };
 
-  const addNewPost = () => {
+  const handleAddNewPost = () => {
     setIsCreating(true);
     setEditingPost({
-      id: Date.now(),
+      id: 0, 
       title: '',
-      type: '',
+      training_type: '',
       description: '',
-      media: [],
-      views: 0
+      photo: '',
+      video: '',
+      views: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      profile: {
+        id: userData.id,
+        user: userData.id,
+        avatar: userData.profilePicture
+      }
     });
   };
 
-  const saveNewPost = () => {
+  const handleSaveNewPost = async () => {
     if (editingPost) {
-      setPosts([...posts, editingPost]);
-      setIsCreating(false);
-      setEditingPost(null);
+      try {
+        const response = await createPost(editingPost);
+        setPosts([...posts, response.data]);
+        setIsCreating(false);
+        setEditingPost(null);
+      } catch (err) {
+        setError('Failed to create post. Please try again.');
+        console.error('Error creating post:', err);
+      }
     }
   };
 
@@ -88,77 +124,20 @@ function App() {
   const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (editingPost && e.target.value) {
       const url = e.target.value;
-      let newMedia: MediaItem;
-
       if (url.match(/\.(jpeg|jpg|gif|png)$/i)) {
-        newMedia = { type: 'image', url };
+        setEditingPost({ ...editingPost, photo: url });
       } else if (url.match(/\.(mp4|webm|ogg)$/i)) {
-        newMedia = { type: 'video', url };
-      } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
-        const videoId = getYoutubeVideoId(url);
-        newMedia = { type: 'youtube', url: `https://www.youtube.com/embed/${videoId}` };
+        setEditingPost({ ...editingPost, video: url });
       } else {
-        // Попробуем загрузить изображение по ссылке
-        const img = new Image();
-        img.onload = () => {
-          setEditingPost(prevPost => {
-            if (prevPost) {
-              return { ...prevPost, media: [...prevPost.media, { type: 'image', url }] };
-            }
-            return prevPost;
-          });
-        };
-        img.onerror = () => {
-          alert('Неподдерживаемый формат файла или недействительная ссылка');
-        };
-        img.src = url;
-        return;
+        console.warn('Unsupported file type');
       }
-
-      setEditingPost(prevPost => {
-        if (prevPost) {
-          return { ...prevPost, media: [...prevPost.media, newMedia] };
-        }
-        return prevPost;
-      });
-      e.target.value = '';
     }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (editingPost && e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-
-      reader.onloadend = () => {
-        let type: 'image' | 'video';
-        if (file.type.startsWith('image/')) {
-          type = 'image';
-        } else if (file.type.startsWith('video/')) {
-          type = 'video';
-        } else {
-          alert('Неподдерживаемый формат файла');
-          return;
-        }
-
-        const newMedia: MediaItem = {
-          type,
-          url: reader.result as string
-        };
-        setEditingPost(prevPost => {
-          if (prevPost) {
-            return { ...prevPost, media: [...prevPost.media, newMedia] };
-          }
-          return prevPost;
-        });
-      };
-
-      reader.onerror = () => {
-        alert('Ошибка при чтении файла');
-      };
-
-      reader.readAsDataURL(file);
-    }
+    // Здесь должна быть логика загрузки файла на сервер
+    // После успешной загрузки, обновите URL в состоянии editingPost
+    console.log('File upload functionality not implemented yet');
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -167,57 +146,15 @@ function App() {
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    if (editingPost && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const file = e.dataTransfer.files[0];
-      const reader = new FileReader();
-
-      reader.onloadend = () => {
-        let type: 'image' | 'video';
-        if (file.type.startsWith('image/')) {
-          type = 'image';
-        } else if (file.type.startsWith('video/')) {
-          type = 'video';
-        } else {
-          alert('Неподдерживаемый формат файла');
-          return;
-        }
-
-        const newMedia: MediaItem = {
-          type,
-          url: reader.result as string
-        };
-        setEditingPost(prevPost => {
-          if (prevPost) {
-            return { ...prevPost, media: [...prevPost.media, newMedia] };
-          }
-          return prevPost;
-        });
-      };
-
-      reader.onerror = () => {
-        alert('Ошибка при чтении файла');
-      };
-
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const getYoutubeVideoId = (url: string): string => {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : "";
-  };
-
-  const updateEditingPostMedia = (newMedia: MediaItem[]) => {
-    if (editingPost) {
-      setEditingPost({ ...editingPost, media: newMedia });
-    }
+    // Здесь должна быть логика обработки перетаскивания файла
+    // После успешной загрузки, обновите URL в состоянии editingPost
+    console.log('Drop functionality not implemented yet');
   };
 
   const filteredPosts = posts.filter(post =>
     post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    post.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    userData.nickname.toLowerCase().includes(searchTerm.toLowerCase())
+    post.training_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    post.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -229,14 +166,20 @@ function App() {
         </div>
 
         <div className="flex-grow flex justify-center">
-          <PostList
-            posts={filteredPosts}
-            userData={userData}
-            isDarkMode={isDarkMode}
-            startEditing={startEditing}
-            showDeleteConfirmation={showDeleteConfirmation}
-            addNewPost={addNewPost}
-          />
+          {isLoading ? (
+            <p>Loading posts...</p>
+          ) : error ? (
+            <p className="text-red-500">{error}</p>
+          ) : (
+            <PostList
+              posts={filteredPosts}
+              userData={userData}
+              isDarkMode={isDarkMode}
+              startEditing={handleStartEditing}
+              showDeleteConfirmation={showDeleteConfirmation}
+              addNewPost={handleAddNewPost}
+            />
+          )}
         </div>
       </div>
 
@@ -244,7 +187,7 @@ function App() {
         <DeleteDialog
           isDarkMode={isDarkMode}
           onCancel={() => setShowDeleteDialog(false)}
-          onConfirm={() => postToDelete !== null && deletePost(postToDelete)}
+          onConfirm={() => postToDelete !== null && handleDeletePost(postToDelete)}
         />
       )}
 
@@ -263,8 +206,7 @@ function App() {
             setIsCreating(false);
             setEditingPost(null);
           }}
-          onSave={isCreating ? saveNewPost : saveEditedPost}
-          updateEditingPostMedia={updateEditingPostMedia}
+          onSave={isCreating ? handleSaveNewPost : handleSaveEditedPost}
         />
       )}
     </div>

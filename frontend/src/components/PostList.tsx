@@ -1,12 +1,13 @@
 import React from 'react';
-import { PostData, UserData } from '../types';
+import { Post } from '../services/api';
 import PostItem from './PostItem';
+import { UserData } from '../types';
 
 interface PostListProps {
-  posts: PostData[];
+  posts: Post[];
   userData: UserData;
   isDarkMode: boolean;
-  startEditing: (post: PostData) => void;
+  startEditing: (post: Post) => void;
   showDeleteConfirmation: (id: number) => void;
   addNewPost: () => void;
 }
@@ -19,18 +20,21 @@ const PostList: React.FC<PostListProps> = ({ posts, userData, isDarkMode, startE
       <div className="flex items-center mb-6 mt-6 relative">
         <img src={userData.profilePicture} alt="Profile" className="w-36 h-36 rounded-full mr-8" />
         <h2 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{userData.nickname}</h2>
-        <button className={`absolute top-2 right-2 ${buttonClass}`} aria-label="Добавить новый пост" onClick={addNewPost}>
+        <button 
+          className={`absolute top-2 right-2 ${buttonClass}`} 
+          aria-label="Добавить новый пост" 
+          onClick={addNewPost}
+        >
           +
         </button>
       </div>
-
-      {posts.map(post => (
+      {posts.map((post) => (
         <PostItem
           key={post.id}
           post={post}
           isDarkMode={isDarkMode}
-          startEditing={startEditing}
-          showDeleteConfirmation={showDeleteConfirmation}
+          startEditing={() => startEditing(post)}
+          showDeleteConfirmation={() => showDeleteConfirmation(post.id)}
         />
       ))}
     </div>
