@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { Post } from '../types';
 
 interface EditPostDialogProps {
@@ -6,7 +6,6 @@ interface EditPostDialogProps {
   isCreating: boolean;
   editingPost: Post;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onMediaChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
   onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
@@ -19,111 +18,65 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({
   isCreating,
   editingPost,
   onInputChange,
-  onMediaChange,
   onFileUpload,
   onDragOver,
   onDrop,
   onCancel,
   onSave
 }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className={`bg-white p-6 rounded-lg ${isDarkMode ? 'text-black' : ''} w-full max-w-md max-h-screen overflow-y-auto`}>
-        <h2 className="text-xl font-bold mb-4">{isCreating ? 'Создание нового поста' : 'Редактирование поста'}</h2>
-        <form>
-          <div className="mb-4">
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700">Название поста</label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              value={editingPost.title}
-              onChange={onInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-            />
-          </div>
-          <div className="mb-4">
-            <label htmlFor="training_type" className="block text-sm font-medium text-gray-700">Тип тренировки</label>
-            <input
-              type="text"
-              id="training_type"
-              name="training_type"
-              value={editingPost.training_type}
-              onChange={onInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-            />
-          </div>
-          <div className="mb-4">
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700">Описание тренировки</label>
-            <textarea
-              id="description"
-              name="description"
-              value={editingPost.description}
-              onChange={onInputChange}
-              rows={4}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-            ></textarea>
-          </div>
-          <div className="mb-4">
-            <label htmlFor="media" className="block text-sm font-medium text-gray-700">Добавить медиа (URL)</label>
-            <input
-              type="text"
-              id="media"
-              name="media"
-              onChange={onMediaChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-            />
-          </div>
-          <div
-            className="mb-4 p-4 border-2 border-dashed border-gray-300 rounded-md"
-            onDragOver={onDragOver}
-            onDrop={onDrop}
-          >
-            <p className="text-center text-gray-500 mb-2">Перетащите файлы сюда или</p>
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                Выберите файлы
-              </button>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={onFileUpload}
-                accept="image/*,video/*"
-                className="hidden"
-              />
-            </div>
-          </div>
-          {editingPost.photo && (
-            <div className="mb-4">
-              <img src={editingPost.photo} alt="Post" className="w-full h-auto rounded-lg" />
-            </div>
-          )}
-          {editingPost.video && (
-            <div className="mb-4">
-              <video src={editingPost.video} controls className="w-full h-auto rounded-lg">
-                Your browser does not support the video tag.
-              </video>
-            </div>
-          )}
-        </form>
-        <div className="flex justify-end mt-4">
+    <div className={`fixed inset-0 flex items-center justify-center z-50 ${isDarkMode ? 'bg-opacity-75 bg-gray-900' : 'bg-opacity-75 bg-gray-200'}`}>
+      <div className={`bg-white rounded-lg p-8 max-w-2xl w-full ${isDarkMode ? 'text-white bg-gray-800' : 'text-black'}`}>
+        <h2 className="text-2xl font-bold mb-4">{isCreating ? 'Create New Post' : 'Edit Post'}</h2>
+        <input
+          type="text"
+          name="title"
+          value={editingPost.title}
+          onChange={onInputChange}
+          placeholder="Title"
+          className={`w-full p-2 mb-4 rounded ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-100'}`}
+        />
+        <input
+          type="text"
+          name="training_type"
+          value={editingPost.training_type}
+          onChange={onInputChange}
+          placeholder="Training Type"
+          className={`w-full p-2 mb-4 rounded ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-100'}`}
+        />
+        <textarea
+          name="description"
+          value={editingPost.description}
+          onChange={onInputChange}
+          placeholder="Description"
+          className={`w-full p-2 mb-4 rounded ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-100'}`}
+        />
+        <div
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+          className={`border-2 border-dashed p-4 mb-4 rounded ${isDarkMode ? 'border-gray-600' : 'border-gray-300'}`}
+        >
+          <p>Drag and drop images or videos here, or click to select files</p>
+          <input
+            type="file"
+            onChange={onFileUpload}
+            accept="image/*,video/*"
+            multiple
+            className="mt-2"
+          />
+        </div>
+        <div className="flex justify-end">
           <button
-            className="mr-2 px-4 py-2 rounded bg-gray-300 hover:bg-gray-400"
             onClick={onCancel}
+            className={`px-4 py-2 rounded mr-2 ${isDarkMode ? 'bg-gray-600 hover:bg-gray-700' : 'bg-gray-200 hover:bg-gray-300'}`}
           >
-            Отмена
+            Cancel
           </button>
           <button
-            className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600"
             onClick={onSave}
+            className={`px-4 py-2 rounded ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
           >
-            {isCreating ? 'Создать' : 'Сохранить'}
+            Save
           </button>
         </div>
       </div>

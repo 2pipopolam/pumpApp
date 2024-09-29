@@ -12,22 +12,28 @@ const api = axios.create({
 });
 
 
+export interface MediaItem {
+  id: number;
+  image?: string;
+  video?: string;
+}
+
+
+
 export interface Post {
   id: number;
   title: string;
+  images: MediaItem[];
+  videos: MediaItem[];
   training_type: string;
   description: string;
-  photo: string;
-  video: string;
   views: number;
   created_at: string;
   updated_at: string;
-  profile: {
-    id: number;
-    user: number;
-    avatar: string;
-  };
+  profile: Profile;
 }
+
+
 
 export interface Profile {
   id: number;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Post, UserData } from './types';
+import { Post, UserData, MediaItem } from './types';
 import { getPosts, createPost, updatePost, deletePost } from './services/api';
 import DarkModeToggle from './components/DarkModeToggle';
 import SearchBar from './components/SearchBar';
@@ -83,8 +83,8 @@ function App() {
       title: '',
       training_type: '',
       description: '',
-      photo: '',
-      video: '',
+      images: [],
+      videos: [],
       views: 0,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -121,23 +121,36 @@ function App() {
     }
   };
 
-  const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (editingPost && e.target.value) {
-      const url = e.target.value;
-      if (url.match(/\.(jpeg|jpg|gif|png)$/i)) {
-        setEditingPost({ ...editingPost, photo: url });
-      } else if (url.match(/\.(mp4|webm|ogg)$/i)) {
-        setEditingPost({ ...editingPost, video: url });
-      } else {
-        console.warn('Unsupported file type');
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && editingPost) {
+      const files = Array.from(e.target.files);
+      const formData = new FormData();
+      
+      files.forEach((file, index) => {
+        formData.append(`file${index}`, file);
+      });
+
+      try {
+        // TODO: Implement actual file upload to server
+        // const response = await api.post('/upload', formData);
+        // const uploadedFiles = response.data;
+
+        // Simulating server response
+        const uploadedFiles: MediaItem[] = files.map((file, index) => ({
+          id: Math.random(),
+          [file.type.startsWith('image') ? 'image' : 'video']: URL.createObjectURL(file)
+        }));
+
+        setEditingPost({
+          ...editingPost,
+          images: [...editingPost.images, ...uploadedFiles.filter(f => 'image' in f) as MediaItem[]],
+          videos: [...editingPost.videos, ...uploadedFiles.filter(f => 'video' in f) as MediaItem[]]
+        });
+      } catch (error) {
+        console.error('Error uploading files:', error);
+        setError('Failed to upload files. Please try again.');
       }
     }
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Здесь должна быть логика загрузки файла на сервер
-    // После успешной загрузки, обновите URL в состоянии editingPost
-    console.log('File upload functionality not implemented yet');
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -146,9 +159,9 @@ function App() {
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    // Здесь должна быть логика обработки перетаскивания файла
-    // После успешной загрузки, обновите URL в состоянии editingPost
-    console.log('Drop functionality not implemented yet');
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileUpload({ target: { files: e.dataTransfer.files } } as React.ChangeEvent<HTMLInputElement>);
+    }
   };
 
   const filteredPosts = posts.filter(post =>
@@ -197,7 +210,6 @@ function App() {
           isCreating={isCreating}
           editingPost={editingPost}
           onInputChange={handleInputChange}
-          onMediaChange={handleMediaChange}
           onFileUpload={handleFileUpload}
           onDragOver={handleDragOver}
           onDrop={handleDrop}

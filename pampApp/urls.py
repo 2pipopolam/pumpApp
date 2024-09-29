@@ -32,7 +32,7 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/user-profile/', views.user_profile, name='user-profile'),
     path('api/user-posts/', views.user_posts, name='user-posts'),
-    path('', include('pamp_app.urls')),
+    #path('', include('pamp_app.urls')),
     path('', views.index, name='index'),
 ]
 

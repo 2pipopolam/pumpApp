@@ -35,7 +35,7 @@ const PostList: React.FC<PostListProps> = ({ posts, userData, isDarkMode, startE
           isDarkMode={isDarkMode}
           startEditing={() => startEditing(post)}
           showDeleteConfirmation={() => showDeleteConfirmation(post.id)}
-        />
+        /> 
       ))}
     </div>
   );

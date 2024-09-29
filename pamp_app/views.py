@@ -21,7 +21,7 @@ def post_detail(request, id):
     return render(request, 'pamp_app/post_detail.html', {'post': post})
 
 
-
+ 
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
@@ -34,26 +34,13 @@ class PostViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        instance = serializer.save(profile=self.request.user.profile)
-        if instance.photo:
-            print(f"Photo saved at: {instance.photo.path}")
-            print(f"Photo URL: {instance.photo.url}")
-            print(f"File exists: {os.path.exists(os.path.join(settings.MEDIA_ROOT, instance.photo.name))}")
-
-
-
-
-# class PostCreateAPIView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def post(self, request, format=None):
-#         serializer = PostSerializer(data=request.data, context={'request': request})
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_201_CREATED)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
+        instance = serializer.save()
+        for image in instance.images.all():
+            print(f"Image saved at: {image.image.path}")
+            print(f"Image URL: {image.image.url}")
+        for video in instance.videos.all():
+            print(f"Video saved at: {video.video.path}")
+            print(f"Video URL: {video.video.url}")
 
 
 @api_view(['GET'])
@@ -73,3 +60,18 @@ def user_posts(request):
 # Render React app
 def index(request):
     return render(request, 'index.html')
+
+
+
+
+# class PostCreateAPIView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request, format=None):
+#         serializer = PostSerializer(data=request.data, context={'request': request})
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
