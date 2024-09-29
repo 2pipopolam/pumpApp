@@ -17,17 +17,17 @@ const PostItem: React.FC<PostItemProps> = ({ post, isDarkMode, startEditing, sho
       <p className="text-sm text-gray-500">Тип тренировки: {post.training_type}</p>
       
       {post.images.length > 0 && (
-        <div className="mt-4 grid grid-cols-2 gap-4">
+        <div className="mt-5 grid grid-cols-1 gap-5">
           {post.images.map((image) => (
-            <img key={image.id} src={image.image} alt={post.title} className="rounded-lg w-full h-48 object-cover" />
+            <img key={image.id} src={image.image} alt={post.title} className="rounded-lg w-full h-full object-cover" />
           ))}
         </div>
       )}
       
       {post.videos.length > 0 && (
-        <div className="mt-4 grid grid-cols-2 gap-4">
+        <div className="mt-5 grid grid-cols-1 gap-5">
           {post.videos.map((video) => (
-            <video key={video.id} src={video.video} controls className="rounded-lg w-full h-48 object-cover">
+            <video key={video.id} src={video.video} controls className="rounded-lg w-full h-full object-cover">
               Your browser does not support the video tag.
             </video>
           ))}

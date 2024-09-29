@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Post, UserData, MediaItem } from './types';
-import { getPosts, createPost, updatePost, deletePost } from './services/api';
+import { getPosts, createPost, updatePost, deletePost, getProfile } from './services/api';
 import DarkModeToggle from './components/DarkModeToggle';
 import SearchBar from './components/SearchBar';
 import PostList from './components/PostList';
@@ -18,18 +18,39 @@ function App() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [postToDelete, setPostToDelete] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [userData, setUserData] = useState<UserData>({
+    id: 1,
+    nickname: 'UserNickname',
+    profilePicture: '',
+  });
 
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
-  const userData: UserData = {
-    id: 1,
-    nickname: 'UserNickname',
-    profilePicture: 'https://via.placeholder.com/500',
-  };
-
   useEffect(() => {
     fetchPosts();
+    fetchUserProfile();
   }, []);
+
+
+    const fetchUserProfile = async () => {
+    try {
+      const response = await getProfile(1); // Предполагаем, что ID пользователя равен 1
+      setUserData({
+        id: response.data.id,
+        nickname: userData.nickname, 
+        //String(response.data.user), // Преобразуем числовое значение в строку
+        profilePicture: response.data.avatar,
+      });
+    } catch (err) {
+      console.error('Error fetching user profile:', err);
+      setError('Failed to fetch user profile. Using default avatar.');
+    }
+  };
+
+
+
+
+
 
   const fetchPosts = async () => {
     setIsLoading(true);
