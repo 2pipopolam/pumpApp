@@ -39,7 +39,7 @@ const PostItem: React.FC<PostItemProps> = ({ post, isDarkMode, startEditing, sho
         <p>Создано: {new Date(post.created_at).toLocaleString()}</p>
         <p>Обновлено: {new Date(post.updated_at).toLocaleString()}</p>
       </div>
-      {children}
+      {children} 
     </div>
   );
 };

@@ -1,12 +1,13 @@
+// src/components/EditPostDialog.tsx
 import React from 'react';
-import { Post } from '../types';
+import { ExtendedPost } from '../types';
 
 interface EditPostDialogProps {
   isDarkMode: boolean;
   isCreating: boolean;
-  editingPost: Post;
+  editingPost: ExtendedPost;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onFileInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
   onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
   onCancel: () => void;
@@ -18,15 +19,15 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({
   isCreating,
   editingPost,
   onInputChange,
-  onFileUpload,
+  onFileInputChange,
   onDragOver,
   onDrop,
   onCancel,
   onSave
 }) => {
   return (
-    <div className={`fixed inset-0 flex items-center justify-center z-50 ${isDarkMode ? 'bg-opacity-75 bg-gray-900' : 'bg-opacity-75 bg-gray-200'}`}>
-      <div className={`bg-white rounded-lg p-8 max-w-2xl w-full ${isDarkMode ? 'text-white bg-gray-800' : 'text-black'}`}>
+    <div className={`fixed inset-0 flex items-center justify-center z-50 ${isDarkMode ? 'bg-gray-900 bg-opacity-50' : 'bg-gray-200 bg-opacity-50'}`}>
+      <div className={`bg-white rounded-lg p-8 max-w-2xl w-full ${isDarkMode ? 'text-white bg-gray-800' : ''}`}>
         <h2 className="text-2xl font-bold mb-4">{isCreating ? 'Create New Post' : 'Edit Post'}</h2>
         <input
           type="text"
@@ -50,18 +51,19 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({
           onChange={onInputChange}
           placeholder="Description"
           className={`w-full p-2 mb-4 rounded ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-gray-100'}`}
+          rows={4}
         />
         <div
           onDragOver={onDragOver}
           onDrop={onDrop}
-          className={`border-2 border-dashed p-4 mb-4 rounded ${isDarkMode ? 'border-gray-600' : 'border-gray-300'}`}
+          className={`border-2 border-dashed p-4 mb-4 text-center ${isDarkMode ? 'border-gray-600' : 'border-gray-300'}`}
         >
-          <p>Drag and drop images or videos here, or click to select files</p>
+          <p>Drag and drop files here or</p>
           <input
             type="file"
-            onChange={onFileUpload}
-            accept="image/*,video/*"
+            onChange={onFileInputChange}
             multiple
+            accept="image/*,video/*"
             className="mt-2"
           />
         </div>

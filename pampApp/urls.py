@@ -22,6 +22,8 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
 from pamp_app import views
+#from pamp_app.views import FileUploadView
+
 
 router = DefaultRouter()
 router.register(r'profiles', views.ProfileViewSet)
@@ -32,6 +34,7 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/user-profile/', views.user_profile, name='user-profile'),
     path('api/user-posts/', views.user_posts, name='user-posts'),
+    #path('api/upload/', FileUploadView.as_view(), name='file-upload'),
     #path('', include('pamp_app.urls')),
     path('', views.index, name='index'),
 ]

@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from .models import Post, Profile , PostImage , PostVideo
-
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
@@ -16,6 +15,14 @@ class PostVideoSerializer(serializers.ModelSerializer):
     class Meta:
         model = PostVideo
         fields = ['id', 'video']
+
+
+# class FileSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = File
+#         fields = "__all__"
+
+
 
 class PostSerializer(serializers.ModelSerializer):
     images = PostImageSerializer(many=True, read_only=True)

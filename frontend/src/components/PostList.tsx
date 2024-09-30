@@ -3,6 +3,7 @@ import { Post } from '../services/api';
 import PostItem from './PostItem';
 import { UserData } from '../types';
 
+
 interface PostListProps {
   posts: Post[];
   userData: UserData;
@@ -29,13 +30,13 @@ const PostList: React.FC<PostListProps> = ({ posts, userData, isDarkMode, startE
         </button>
       </div>
       {posts.map((post) => (
-        <PostItem
+        <PostItem 
           key={post.id}
           post={post}
           isDarkMode={isDarkMode}
           startEditing={() => startEditing(post)}
           showDeleteConfirmation={() => showDeleteConfirmation(post.id)}
-        /> 
+        />
       ))}
     </div>
   );

@@ -47,11 +47,31 @@ export const getPosts = (): Promise<AxiosResponse<Post[]>> =>
 export const getPost = (id: number): Promise<AxiosResponse<Post>> => 
   api.get(`${API_URL}/posts/${id}/`);
 
-export const createPost = (postData: Omit<Post, 'id' | 'created_at' | 'updated_at' | 'views'>): Promise<AxiosResponse<Post>> => 
-  api.post(`${API_URL}/posts/`, postData);
 
-export const updatePost = (id: number, postData: Partial<Post>): Promise<AxiosResponse<Post>> => 
-  api.put(`${API_URL}/posts/${id}/`, postData);
+// export const createPost = (postData: Omit<Post, 'id' | 'created_at' | 'updated_at' | 'views'>): Promise<AxiosResponse<Post>> => 
+//   api.post(`${API_URL}/posts/`, postData);
+
+
+// export const updatePost = (id: number, postData: Partial<Post>): Promise<AxiosResponse<Post>> => 
+//   api.put(`${API_URL}/posts/${id}/`, postData);
+
+
+export const createPost = (formData: FormData): Promise<AxiosResponse<Post>> => 
+  api.post(`/posts/`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+
+export const updatePost = (id: number, formData: FormData): Promise<AxiosResponse<Post>> => 
+  api.put(`/posts/${id}/`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+
 
 export const deletePost = (id: number): Promise<AxiosResponse<void>> => 
   api.delete(`${API_URL}/posts/${id}/`);
