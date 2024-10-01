@@ -1,7 +1,6 @@
 # serializers.py
 from rest_framework import serializers
-from .models import Post, Profile, PostImage, PostVideo
-
+from .models import Post, Profile, PostImage, PostVideo, TrainingSession
 
 class ProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
@@ -47,6 +46,20 @@ class PostVideoSerializer(serializers.ModelSerializer):
         if not data.get('video') and not data.get('video_url'):
             raise serializers.ValidationError("Either video file or video URL must be provided.")
         return data
+
+
+
+
+
+class TrainingSessionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TrainingSession
+        fields = ['id', 'date', 'time', 'recurrence', 'days_of_week']
+
+    def create(self, validated_data):
+        profile = self.context['request'].user.profile
+        return TrainingSession.objects.create(profile=profile, **validated_data)
+
 
 
 

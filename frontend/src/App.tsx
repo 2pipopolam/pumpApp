@@ -1,15 +1,30 @@
 // App.tsx
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { UserData, ExtendedPost, Post, ExtendedMediaItem, MediaItem } from './types';
-import { getPosts, createPost, updatePost, deletePost, getProfile, updateProfile } from './services/api';
+import {
+  UserData,
+  ExtendedPost,
+  Post,
+  ExtendedMediaItem,
+  MediaItem,
+} from './types';
+import {
+  getPosts,
+  createPost,
+  updatePost,
+  deletePost,
+  getProfile,
+  updateProfile,
+} from './services/api';
 import DarkModeToggle from './components/DarkModeToggle';
 import SearchBar from './components/SearchBar';
 import PostList from './components/PostList';
 import DeleteDialog from './components/DeleteDialog';
 import EditPostDialog from './components/EditPostDialog';
 import EditProfilePictureDialog from './components/EditProfilePictureDialog';
+import TrainingCalendar from './components/TrainingCalendar';
 import { AxiosResponse } from 'axios';
+import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -115,7 +130,7 @@ function App() {
       formData.append('training_type', editingPost.training_type);
       formData.append('description', editingPost.description);
 
-      // IDs of existing images and videos to keep
+      // IDs существующих изображений и видео для сохранения на сервере
       const existingImageIds = editingPost.images
         .filter((image) => !image.isNew && image.id !== null)
         .map((image) => image.id!) as number[];
@@ -127,28 +142,28 @@ function App() {
       existingImageIds.forEach((id) => formData.append('existing_images', id.toString()));
       existingVideoIds.forEach((id) => formData.append('existing_videos', id.toString()));
 
-      // Add new image files
+      // Добавляем новые файлы изображений
       editingPost.images.forEach((image) => {
         if (image.file) {
           formData.append('images', image.file);
         }
       });
 
-      // Add image URLs
+      // Добавляем URL изображений
       editingPost.images.forEach((image) => {
         if (image.image_url && image.isNew) {
           formData.append('image_urls', image.image_url);
         }
       });
 
-      // Add new video files
+      // Добавляем новые файлы видео
       editingPost.videos.forEach((video) => {
         if (video.file) {
           formData.append('videos', video.file);
         }
       });
 
-      // Add video URLs
+      // Добавляем URL видео
       editingPost.videos.forEach((video) => {
         if (video.video_url && video.isNew) {
           formData.append('video_urls', video.video_url);
@@ -337,77 +352,102 @@ function App() {
   );
 
   return (
-    <div
-      className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'}`}
-    >
-      <DarkModeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
-      <div className="flex">
-        <div className="w-64 p-4 fixed left-10 top-12 h-full flex flex-col">
-          <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} isDarkMode={isDarkMode} />
-        </div>
+    <Router>
+      <div
+        className={`min-h-screen ${
+          isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'
+        }`}
+      >
+        <DarkModeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+        <nav className="p-4">
+          <Link to="/" className="mr-4">
+            Главная
+          </Link>
+          <Link to="/calendar">Календарь тренировок</Link>
+        </nav>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <div className="flex">
+                <div className="w-64 p-4 fixed left-10 top-12 h-full flex flex-col">
+                  <SearchBar
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
+                    isDarkMode={isDarkMode}
+                  />
+                </div>
 
-        <div className="flex-grow flex justify-center">
-          {isLoading ? (
-            <p>Загрузка постов...</p>
-          ) : error ? (
-            <p className="text-red-500">{error}</p>
-          ) : (
-            <PostList
-              posts={filteredPosts}
-              userData={userData}
-              isDarkMode={isDarkMode}
-              startEditing={(post: ExtendedPost) => handleStartEditing(post)}
-              showDeleteConfirmation={(id: number) => {
-                setShowDeleteDialog(true);
-                setPostToDelete(id);
-              }}
-              addNewPost={handleAddNewPost}
-              onEditProfilePicture={() => setIsEditingProfilePicture(true)}
-            />
-          )}
-        </div>
+                <div className="flex-grow flex justify-center">
+                  {isLoading ? (
+                    <p>Загрузка постов...</p>
+                  ) : error ? (
+                    <p className="text-red-500">{error}</p>
+                  ) : (
+                    <PostList
+                      posts={filteredPosts}
+                      userData={userData}
+                      isDarkMode={isDarkMode}
+                      startEditing={(post: ExtendedPost) => handleStartEditing(post)}
+                      showDeleteConfirmation={(id: number) => {
+                        setShowDeleteDialog(true);
+                        setPostToDelete(id);
+                      }}
+                      addNewPost={handleAddNewPost}
+                      onEditProfilePicture={() => setIsEditingProfilePicture(true)}
+                    />
+                  )}
+                </div>
+
+                {showDeleteDialog && (
+                  <DeleteDialog
+                    isDarkMode={isDarkMode}
+                    onCancel={() => setShowDeleteDialog(false)}
+                    onConfirm={() => postToDelete !== null && handleDeletePost(postToDelete)}
+                  />
+                )}
+
+                {(isEditing || isCreating) && editingPost && (
+                  <EditPostDialog
+                    isDarkMode={isDarkMode}
+                    isCreating={isCreating}
+                    editingPost={editingPost}
+                    onInputChange={handleInputChange}
+                    onFileInputChange={handleFileInputChange}
+                    onRemoveMedia={handleRemoveMedia}
+                    onAddMediaUrl={handleAddMediaUrl}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                    onCancel={() => {
+                      setIsEditing(false);
+                      setIsCreating(false);
+                      setEditingPost(null);
+                    }}
+                    onSave={handleSavePost}
+                  />
+                )}
+
+                {isEditingProfilePicture && (
+                  <EditProfilePictureDialog
+                    isDarkMode={isDarkMode}
+                    userData={userData}
+                    onCancel={() => setIsEditingProfilePicture(false)}
+                    onSave={(newProfilePicture) => {
+                      handleSaveProfilePicture(newProfilePicture);
+                      setIsEditingProfilePicture(false);
+                    }}
+                  />
+                )}
+              </div>
+            }
+          />
+          <Route
+            path="/calendar"
+            element={<TrainingCalendar isDarkMode={isDarkMode} />}
+          />
+        </Routes>
       </div>
-
-      {showDeleteDialog && (
-        <DeleteDialog
-          isDarkMode={isDarkMode}
-          onCancel={() => setShowDeleteDialog(false)}
-          onConfirm={() => postToDelete !== null && handleDeletePost(postToDelete)}
-        />
-      )}
-
-      {(isEditing || isCreating) && editingPost && (
-        <EditPostDialog
-          isDarkMode={isDarkMode}
-          isCreating={isCreating}
-          editingPost={editingPost}
-          onInputChange={handleInputChange}
-          onFileInputChange={handleFileInputChange}
-          onRemoveMedia={handleRemoveMedia}
-          onAddMediaUrl={handleAddMediaUrl}
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-          onCancel={() => {
-            setIsEditing(false);
-            setIsCreating(false);
-            setEditingPost(null);
-          }}
-          onSave={handleSavePost}
-        />
-      )}
-
-      {isEditingProfilePicture && (
-        <EditProfilePictureDialog
-          isDarkMode={isDarkMode}
-          userData={userData}
-          onCancel={() => setIsEditingProfilePicture(false)}
-          onSave={(newProfilePicture) => {
-            handleSaveProfilePicture(newProfilePicture);
-            setIsEditingProfilePicture(false);
-          }}
-        />
-      )}
-    </div>
+    </Router>
   );
 }
 

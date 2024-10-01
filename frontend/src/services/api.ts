@@ -1,5 +1,5 @@
 import axios, { AxiosResponse } from 'axios';
-import { MediaItem , Post , Profile } from '../types';
+import { MediaItem , Post , Profile, TrainingSession } from '../types';
 const API_URL = 'http://localhost:8000/api';
 
 
@@ -60,3 +60,22 @@ export const updatePost = (id: number, formData: FormData): Promise<AxiosRespons
 export const deletePost = (id: number): Promise<AxiosResponse<void>> =>
   api.delete(`/posts/${id}/`);
 
+
+
+
+//TrainingSession
+
+export const getTrainingSessions = (): Promise<AxiosResponse<TrainingSession[]>> =>
+  api.get(`/training-sessions/`);
+
+export const createTrainingSession = (
+  data: Partial<TrainingSession>
+): Promise<AxiosResponse<TrainingSession>> => api.post(`/training-sessions/`, data);
+
+export const updateTrainingSession = (
+  id: number,
+  data: Partial<TrainingSession>
+): Promise<AxiosResponse<TrainingSession>> => api.patch(`/training-sessions/${id}/`, data);
+
+export const deleteTrainingSession = (id: number): Promise<AxiosResponse<void>> =>
+  api.delete(`/training-sessions/${id}/`);

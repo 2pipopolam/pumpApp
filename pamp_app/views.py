@@ -5,8 +5,8 @@ from rest_framework import viewsets, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import api_view , action
 #from rest_framework.parsers import MultiPartParser, FormParser
-from .models import Profile, Post
-from .serializers import ProfileSerializer, PostSerializer
+from .models import Profile, Post,TrainingSession
+from .serializers import ProfileSerializer, PostSerializer, TrainingSessionSerializer
 
 # from rest_framework import status
 # from rest_framework.views import APIView
@@ -70,6 +70,15 @@ class PostViewSet(viewsets.ModelViewSet):
             else:
                 print("No video file or URL provided.")
 
+
+
+
+class TrainingSessionViewSet(viewsets.ModelViewSet):
+    serializer_class = TrainingSessionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return TrainingSession.objects.filter(profile=self.request.user.profile)
 
 
 

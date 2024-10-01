@@ -47,6 +47,14 @@ export interface ExtendedPost extends Omit<Post, 'images' | 'videos'> {
 }
 
 
+export interface TrainingSession {
+  id: number;
+  date: string; // ISO format date
+  time: string; // ISO format time
+  recurrence: string; // 'once' or 'weekly'
+  days_of_week?: string; // Comma-separated days, e.g., 'Monday,Thursday'
+}
+
 
 
 /*
