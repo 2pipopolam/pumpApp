@@ -56,25 +56,7 @@ export const getPost = (id: number): Promise<AxiosResponse<Post>> =>
 //   api.put(`${API_URL}/posts/${id}/`, postData);
 
 
-export const createPost = (formData: FormData): Promise<AxiosResponse<Post>> => 
-  api.post(`/posts/`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
 
-
-export const updatePost = (id: number, formData: FormData): Promise<AxiosResponse<Post>> => 
-  api.put(`/posts/${id}/`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-
-
-
-export const deletePost = (id: number): Promise<AxiosResponse<void>> => 
-  api.delete(`${API_URL}/posts/${id}/`);
 
 export const getProfiles = (): Promise<AxiosResponse<Profile[]>> => 
   api.get(`${API_URL}/profiles/`);
@@ -84,3 +66,23 @@ export const getProfile = (id: number): Promise<AxiosResponse<Profile>> =>
 
 export const updateProfile = (id: number, profileData: Partial<Profile>): Promise<AxiosResponse<Profile>> => 
   api.put(`${API_URL}/profiles/${id}/`, profileData);
+
+
+
+
+export const createPost = (formData: FormData): Promise<AxiosResponse<Post>> => 
+  api.post(`/posts/`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+export const updatePost = (id: number, formData: FormData): Promise<AxiosResponse<Post>> => 
+  api.patch(`/posts/${id}/`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+export const deletePost = (id: number): Promise<AxiosResponse<void>> => 
+  api.delete(`/posts/${id}/`);

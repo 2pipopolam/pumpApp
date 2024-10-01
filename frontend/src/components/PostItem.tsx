@@ -1,3 +1,4 @@
+// PostItem.tsx
 import React from 'react';
 import { Post } from '../types';
 
@@ -6,12 +7,31 @@ interface PostItemProps {
   isDarkMode: boolean;
   startEditing: () => void;
   showDeleteConfirmation: () => void;
-  children?: React.ReactNode;
 }
 
-const PostItem: React.FC<PostItemProps> = ({ post, isDarkMode, startEditing, showDeleteConfirmation, children }) => {
+const PostItem: React.FC<PostItemProps> = ({ post, isDarkMode, startEditing, showDeleteConfirmation }) => {
   return (
     <div className={`rounded-lg shadow-md p-6 mb-8 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} relative`}>
+      {/* Кнопки редактирования и удаления */}
+      <div className="absolute top-2 left-2 flex space-x-2">
+        <button
+          onClick={startEditing}
+          className="text-xl"
+          aria-label="Редактировать пост"
+        >
+          ✏️
+        </button>
+      </div>
+      <div className="absolute top-2 right-2 flex space-x-2">
+        <button
+          onClick={showDeleteConfirmation}
+          className="text-xl"
+          aria-label="Удалить пост"
+        >
+          🗑️
+        </button>
+      </div>
+      {/* Остальное содержимое поста */}
       <h2 className="text-2xl font-bold mb-4">{post.title}</h2>
       <p className="mb-4">{post.description}</p>
       <p className="text-sm text-gray-500">Тип тренировки: {post.training_type}</p>
@@ -39,9 +59,9 @@ const PostItem: React.FC<PostItemProps> = ({ post, isDarkMode, startEditing, sho
         <p>Создано: {new Date(post.created_at).toLocaleString()}</p>
         <p>Обновлено: {new Date(post.updated_at).toLocaleString()}</p>
       </div>
-      {children} 
     </div>
   );
 };
 
 export default PostItem;
+

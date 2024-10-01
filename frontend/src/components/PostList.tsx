@@ -1,8 +1,8 @@
+// PostList.tsx
 import React from 'react';
-import { Post } from '../services/api';
+import { Post } from '../types';
 import PostItem from './PostItem';
 import { UserData } from '../types';
-
 
 interface PostListProps {
   posts: Post[];
