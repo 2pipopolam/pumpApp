@@ -26,16 +26,14 @@ from pamp_app import views
 
 
 router = DefaultRouter()
-router.register(r'profiles', views.ProfileViewSet)
-router.register(r'posts', views.PostViewSet)
+router.register(r'profiles', views.ProfileViewSet, basename='profile')
+router.register(r'posts', views.PostViewSet)  # If PostViewSet has a queryset, no need to specify basename
 
 urlpatterns = [
     path('admin/', admin.site.urls),     
     path('api/', include(router.urls)),
     path('api/user-profile/', views.user_profile, name='user-profile'),
     path('api/user-posts/', views.user_posts, name='user-posts'),
-    #path('api/upload/', FileUploadView.as_view(), name='file-upload'),
-    #path('', include('pamp_app.urls')),
     path('', views.index, name='index'),
 ]
 

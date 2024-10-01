@@ -2,18 +2,25 @@
 from django.db import models
 from django.conf import settings
 
+
 class Profile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE
     )
+
     avatar = models.ImageField(
+        null=True,
         blank=True,
         upload_to='user_avatars/%Y/%m/%d/',
     )
 
+
     def __str__(self):
         return f'Profile of {self.user.username}'
+
+
+
 
 class PostImage(models.Model):
     post = models.ForeignKey('Post', related_name='images', on_delete=models.CASCADE)

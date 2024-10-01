@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { UserData, ExtendedPost, Post, ExtendedMediaItem, MediaItem } from './types';
-import { getPosts, createPost, updatePost, deletePost, getProfile } from './services/api';
+import { getPosts, createPost, updatePost, deletePost, getProfile, updateProfile } from './services/api';
 import DarkModeToggle from './components/DarkModeToggle';
 import SearchBar from './components/SearchBar';
 import PostList from './components/PostList';
 import DeleteDialog from './components/DeleteDialog';
 import EditPostDialog from './components/EditPostDialog';
+import EditProfilePictureDialog from './components/EditProfilePictureDialog';
 import { AxiosResponse } from 'axios';
 
 function App() {
@@ -23,25 +24,26 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [userData, setUserData] = useState<UserData>({
     id: 1,
-    nickname: 'UserNickname',
+    username: '',
     profilePicture: '',
   });
+  const [isEditingProfilePicture, setIsEditingProfilePicture] = useState(false);
 
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
   const fetchUserProfile = useCallback(async () => {
     try {
-      const response = await getProfile(1); // Предполагается, что ID пользователя 1
+      const response = await getProfile();
       setUserData({
         id: response.data.id,
-        nickname: userData.nickname,
+        username: response.data.username,
         profilePicture: response.data.avatar,
       });
     } catch (err) {
       console.error('Ошибка при получении профиля пользователя:', err);
       setError('Не удалось получить профиль пользователя. Используется аватар по умолчанию.');
     }
-  }, [userData.nickname]);
+  }, []);
 
   const fetchPosts = useCallback(async () => {
     setIsLoading(true);
@@ -101,6 +103,7 @@ function App() {
         id: userData.id,
         user: userData.id,
         avatar: userData.profilePicture,
+        username: userData.username,
       },
     });
   };
@@ -112,7 +115,7 @@ function App() {
       formData.append('training_type', editingPost.training_type);
       formData.append('description', editingPost.description);
 
-      // IDs существующих изображений и видео для сохранения на сервере
+      // IDs of existing images and videos to keep
       const existingImageIds = editingPost.images
         .filter((image) => !image.isNew && image.id !== null)
         .map((image) => image.id!) as number[];
@@ -124,28 +127,28 @@ function App() {
       existingImageIds.forEach((id) => formData.append('existing_images', id.toString()));
       existingVideoIds.forEach((id) => formData.append('existing_videos', id.toString()));
 
-      // Добавляем новые файлы изображений
+      // Add new image files
       editingPost.images.forEach((image) => {
         if (image.file) {
           formData.append('images', image.file);
         }
       });
 
-      // Добавляем URL изображений
+      // Add image URLs
       editingPost.images.forEach((image) => {
         if (image.image_url && image.isNew) {
           formData.append('image_urls', image.image_url);
         }
       });
 
-      // Добавляем новые файлы видео
+      // Add new video files
       editingPost.videos.forEach((video) => {
         if (video.file) {
           formData.append('videos', video.file);
         }
       });
 
-      // Добавляем URL видео
+      // Add video URLs
       editingPost.videos.forEach((video) => {
         if (video.video_url && video.isNew) {
           formData.append('video_urls', video.video_url);
@@ -208,7 +211,7 @@ function App() {
         images: [
           ...editingPost.images,
           ...imageFiles.map((file) => ({
-            id: null, // Новые файлы не имеют ID из БД
+            id: null,
             file,
             isNew: true,
           })),
@@ -216,7 +219,7 @@ function App() {
         videos: [
           ...editingPost.videos,
           ...videoFiles.map((file) => ({
-            id: null, // Новые файлы не имеют ID из БД
+            id: null,
             file,
             isNew: true,
           })),
@@ -242,7 +245,7 @@ function App() {
           images: [
             ...editingPost.images,
             ...imageFiles.map((file) => ({
-              id: null, // Новые файлы не имеют ID из БД
+              id: null,
               file,
               isNew: true,
             })),
@@ -250,7 +253,7 @@ function App() {
           videos: [
             ...editingPost.videos,
             ...videoFiles.map((file) => ({
-              id: null, // Новые файлы не имеют ID из БД
+              id: null,
               file,
               isNew: true,
             })),
@@ -284,7 +287,7 @@ function App() {
           images: [
             ...editingPost.images,
             {
-              id: null, // Новые URL не имеют ID из БД
+              id: null,
               image_url: url,
               isNew: true,
             },
@@ -296,13 +299,33 @@ function App() {
           videos: [
             ...editingPost.videos,
             {
-              id: null, // Новые URL не имеют ID из БД
+              id: null,
               video_url: url,
               isNew: true,
             },
           ],
         });
       }
+    }
+  };
+
+  const handleSaveProfilePicture = async (newProfilePicture: File | null) => {
+    const formData = new FormData();
+    if (newProfilePicture) {
+      formData.append('avatar', newProfilePicture);
+    } else {
+      formData.append('avatar', '');
+    }
+
+    try {
+      const response = await updateProfile(formData);
+      setUserData({
+        ...userData,
+        profilePicture: response.data.avatar,
+      });
+    } catch (err) {
+      setError('Не удалось обновить аватар. Пожалуйста, попробуйте снова.');
+      console.error('Ошибка при обновлении аватара:', err);
     }
   };
 
@@ -339,6 +362,7 @@ function App() {
                 setPostToDelete(id);
               }}
               addNewPost={handleAddNewPost}
+              onEditProfilePicture={() => setIsEditingProfilePicture(true)}
             />
           )}
         </div>
@@ -369,6 +393,18 @@ function App() {
             setEditingPost(null);
           }}
           onSave={handleSavePost}
+        />
+      )}
+
+      {isEditingProfilePicture && (
+        <EditProfilePictureDialog
+          isDarkMode={isDarkMode}
+          userData={userData}
+          onCancel={() => setIsEditingProfilePicture(false)}
+          onSave={(newProfilePicture) => {
+            handleSaveProfilePicture(newProfilePicture);
+            setIsEditingProfilePicture(false);
+          }}
         />
       )}
     </div>

@@ -3,14 +3,14 @@ from django.conf import settings
 from django.shortcuts import render,get_object_or_404
 from rest_framework import viewsets, permissions
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.decorators import api_view , action
+#from rest_framework.parsers import MultiPartParser, FormParser
 from .models import Profile, Post
 from .serializers import ProfileSerializer, PostSerializer
 
-from rest_framework import status
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+# from rest_framework import status
+# from rest_framework.views import APIView
+# from rest_framework.permissions import IsAuthenticated
 
 
 def post_list(request):
@@ -22,11 +22,27 @@ def post_detail(request, id):
     return render(request, 'pamp_app/post_detail.html', {'post': post})
 
 
- 
+
 class ProfileViewSet(viewsets.ModelViewSet):
-    queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Profile.objects.filter(user=self.request.user)
+
+    @action(detail=False, methods=['get', 'patch', 'put'])
+    def me(self, request):
+        profile = get_object_or_404(Profile, user=request.user)
+        if request.method == 'GET':
+            serializer = self.get_serializer(profile)
+            return Response(serializer.data)
+        elif request.method in ['PATCH', 'PUT']:
+            serializer = self.get_serializer(profile, data=request.data, partial=(request.method == 'PATCH'))
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+
+
 
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -37,11 +53,23 @@ class PostViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         instance = serializer.save()
         for image in instance.images.all():
-            print(f"Image saved at: {image.image.path}")
-            print(f"Image URL: {image.image.url}")
+            if image.image:
+                print(f"Image saved at: {image.image.path}")
+                print(f"Image URL: {image.image.url}")
+            elif image.image_url:
+                print(f"Image URL: {image.image_url}")
+            else:
+                print("No image file or URL provided.")
+
         for video in instance.videos.all():
-            print(f"Video saved at: {video.video.path}")
-            print(f"Video URL: {video.video.url}")
+            if video.video:
+                print(f"Video saved at: {video.video.path}")
+                print(f"Video URL: {video.video.url}")
+            elif video.video_url:
+                print(f"Video URL: {video.video_url}")
+            else:
+                print("No video file or URL provided.")
+
 
 
 

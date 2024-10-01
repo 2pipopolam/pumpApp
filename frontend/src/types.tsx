@@ -1,10 +1,18 @@
 // types.tsx
 
 export interface UserData {
-  id: number;
-  nickname: string;
-  profilePicture: string;
+id: number;
+username: string;
+profilePicture: string;
 }
+
+export interface Profile {
+id: number;
+user: number;
+username: string;
+avatar: string;
+}
+
 
 export interface MediaItem {
   id: number | null;
@@ -19,11 +27,6 @@ export interface ExtendedMediaItem extends MediaItem {
   isNew?: boolean; // Флаг, указывающий, что медиа является новым
 }
 
-export interface Profile {
-  id: number;
-  user: number;
-  avatar: string;
-}
 
 export interface Post {
   id: number;

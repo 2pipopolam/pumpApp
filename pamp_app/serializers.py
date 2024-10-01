@@ -2,20 +2,53 @@
 from rest_framework import serializers
 from .models import Post, Profile, PostImage, PostVideo
 
+
 class ProfileSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+
     class Meta:
         model = Profile
-        fields = ['id', 'user', 'avatar']
+        fields = ['id', 'user', 'username', 'avatar']
+
+    def update(self, instance, validated_data):
+        avatar = validated_data.get('avatar', None)
+        if avatar == '':
+            if instance.avatar:
+                instance.avatar.delete(save=False)
+            instance.avatar = None
+        elif avatar is not None:
+            if instance.avatar:
+                instance.avatar.delete(save=False)
+            instance.avatar = avatar
+
+        instance.save()
+        return instance
+
+
+
+
 
 class PostImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = PostImage
         fields = ['id', 'image', 'image_url']
 
+    def validate(self, data):
+        if not data.get('image') and not data.get('image_url'):
+            raise serializers.ValidationError("Either image file or image URL must be provided.")
+        return data
+
 class PostVideoSerializer(serializers.ModelSerializer):
     class Meta:
         model = PostVideo
         fields = ['id', 'video', 'video_url']
+
+    def validate(self, data):
+        if not data.get('video') and not data.get('video_url'):
+            raise serializers.ValidationError("Either video file or video URL must be provided.")
+        return data
+
+
 
 class PostSerializer(serializers.ModelSerializer):
     images = PostImageSerializer(many=True, required=False)
