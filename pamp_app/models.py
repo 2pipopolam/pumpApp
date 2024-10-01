@@ -1,14 +1,12 @@
+
 from django.db import models
-#from django.core.validators import FileExtensionValidator
 from django.conf import settings
-#from .fields import CustomFileField
 
 class Profile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE
     )
- 
     avatar = models.ImageField(
         blank=True,
         upload_to='user_avatars/%Y/%m/%d/',
@@ -19,11 +17,13 @@ class Profile(models.Model):
 
 class PostImage(models.Model):
     post = models.ForeignKey('Post', related_name='images', on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='post_images/%Y/%m/%d/')
+    image = models.ImageField(upload_to='post_images/%Y/%m/%d/', null=True, blank=True)
+    image_url = models.URLField(max_length=500, null=True, blank=True)
 
 class PostVideo(models.Model):
     post = models.ForeignKey('Post', related_name='videos', on_delete=models.CASCADE)
-    video = models.FileField(upload_to='post_videos/%Y/%m/%d/')
+    video = models.FileField(upload_to='post_videos/%Y/%m/%d/', null=True, blank=True)
+    video_url = models.URLField(max_length=500, null=True, blank=True)
 
 class Post(models.Model):
     title = models.CharField(max_length=200)
@@ -36,6 +36,9 @@ class Post(models.Model):
 
     def __str__(self):
         return self.title
+
+
+
 
 
 # class File(models.Model):

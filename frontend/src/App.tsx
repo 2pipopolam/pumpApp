@@ -1,12 +1,14 @@
 // App.tsx
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { UserData, ExtendedPost, Post } from './types';
+import { UserData, ExtendedPost, Post, ExtendedMediaItem, MediaItem } from './types';
 import { getPosts, createPost, updatePost, deletePost, getProfile } from './services/api';
 import DarkModeToggle from './components/DarkModeToggle';
 import SearchBar from './components/SearchBar';
 import PostList from './components/PostList';
 import DeleteDialog from './components/DeleteDialog';
 import EditPostDialog from './components/EditPostDialog';
+import { AxiosResponse } from 'axios';
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -29,15 +31,15 @@ function App() {
 
   const fetchUserProfile = useCallback(async () => {
     try {
-      const response = await getProfile(1); // Assuming user ID is 1
+      const response = await getProfile(1); // Предполагается, что ID пользователя 1
       setUserData({
         id: response.data.id,
         nickname: userData.nickname,
         profilePicture: response.data.avatar,
       });
     } catch (err) {
-      console.error('Error fetching user profile:', err);
-      setError('Failed to fetch user profile. Using default avatar.');
+      console.error('Ошибка при получении профиля пользователя:', err);
+      setError('Не удалось получить профиль пользователя. Используется аватар по умолчанию.');
     }
   }, [userData.nickname]);
 
@@ -54,8 +56,8 @@ function App() {
         }))
       );
     } catch (err) {
-      setError('Failed to fetch posts. Please try again later.');
-      console.error('Error fetching posts:', err);
+      setError('Не удалось загрузить посты. Пожалуйста, попробуйте позже.');
+      console.error('Ошибка при загрузке постов:', err);
     } finally {
       setIsLoading(false);
     }
@@ -73,8 +75,8 @@ function App() {
       setShowDeleteDialog(false);
       setPostToDelete(null);
     } catch (err) {
-      setError('Failed to delete post. Please try again.');
-      console.error('Error deleting post:', err);
+      setError('Не удалось удалить пост. Пожалуйста, попробуйте снова.');
+      console.error('Ошибка при удалении поста:', err);
     }
   };
 
@@ -110,47 +112,78 @@ function App() {
       formData.append('training_type', editingPost.training_type);
       formData.append('description', editingPost.description);
 
-      // Include existing image IDs to retain on the server
+      // IDs существующих изображений и видео для сохранения на сервере
       const existingImageIds = editingPost.images
-        .filter((image) => !image.file && image.id)
-        .map((image) => image.id);
+        .filter((image) => !image.isNew && image.id !== null)
+        .map((image) => image.id!) as number[];
 
-      // Include existing video IDs to retain on the server
       const existingVideoIds = editingPost.videos
-        .filter((video) => !video.file && video.id)
-        .map((video) => video.id);
+        .filter((video) => !video.isNew && video.id !== null)
+        .map((video) => video.id!) as number[];
 
       existingImageIds.forEach((id) => formData.append('existing_images', id.toString()));
       existingVideoIds.forEach((id) => formData.append('existing_videos', id.toString()));
 
-      // Add new images
+      // Добавляем новые файлы изображений
       editingPost.images.forEach((image) => {
         if (image.file) {
           formData.append('images', image.file);
         }
       });
 
-      // Add new videos
+      // Добавляем URL изображений
+      editingPost.images.forEach((image) => {
+        if (image.image_url && image.isNew) {
+          formData.append('image_urls', image.image_url);
+        }
+      });
+
+      // Добавляем новые файлы видео
       editingPost.videos.forEach((video) => {
         if (video.file) {
           formData.append('videos', video.file);
         }
       });
 
+      // Добавляем URL видео
+      editingPost.videos.forEach((video) => {
+        if (video.video_url && video.isNew) {
+          formData.append('video_urls', video.video_url);
+        }
+      });
+
       try {
+        let response: AxiosResponse<Post>;
         if (isCreating) {
-          const response = await createPost(formData);
-          setPosts([...posts, response.data]);
+          response = await createPost(formData);
+          setPosts([
+            ...posts,
+            {
+              ...response.data,
+              images: response.data.images.map((image: MediaItem) => ({ ...image, file: undefined })),
+              videos: response.data.videos.map((video: MediaItem) => ({ ...video, file: undefined })),
+            },
+          ]);
           setIsCreating(false);
         } else {
-          const response = await updatePost(editingPost.id, formData);
-          setPosts(posts.map((post) => (post.id === editingPost.id ? response.data : post)));
+          response = await updatePost(editingPost.id, formData);
+          setPosts(
+            posts.map((post) =>
+              post.id === editingPost.id
+                ? {
+                    ...response.data,
+                    images: response.data.images.map((image: MediaItem) => ({ ...image, file: undefined })),
+                    videos: response.data.videos.map((video: MediaItem) => ({ ...video, file: undefined })),
+                  }
+                : post
+            )
+          );
           setIsEditing(false);
         }
         setEditingPost(null);
       } catch (err) {
-        setError('Failed to save post. Please try again.');
-        console.error('Error saving post:', err);
+        setError('Не удалось сохранить пост. Пожалуйста, попробуйте снова.');
+        console.error('Ошибка при сохранении поста:', err);
       }
     }
   };
@@ -174,11 +207,19 @@ function App() {
         ...editingPost,
         images: [
           ...editingPost.images,
-          ...imageFiles.map((file) => ({ id: Date.now() + Math.random(), file })),
+          ...imageFiles.map((file) => ({
+            id: null, // Новые файлы не имеют ID из БД
+            file,
+            isNew: true,
+          })),
         ],
         videos: [
           ...editingPost.videos,
-          ...videoFiles.map((file) => ({ id: Date.now() + Math.random(), file })),
+          ...videoFiles.map((file) => ({
+            id: null, // Новые файлы не имеют ID из БД
+            file,
+            isNew: true,
+          })),
         ],
       });
     }
@@ -200,28 +241,66 @@ function App() {
           ...editingPost,
           images: [
             ...editingPost.images,
-            ...imageFiles.map((file) => ({ id: Date.now() + Math.random(), file })),
+            ...imageFiles.map((file) => ({
+              id: null, // Новые файлы не имеют ID из БД
+              file,
+              isNew: true,
+            })),
           ],
           videos: [
             ...editingPost.videos,
-            ...videoFiles.map((file) => ({ id: Date.now() + Math.random(), file })),
+            ...videoFiles.map((file) => ({
+              id: null, // Новые файлы не имеют ID из БД
+              file,
+              isNew: true,
+            })),
           ],
         });
       }
     }
   };
 
-  const handleRemoveMedia = (type: 'image' | 'video', id: number) => {
+  const handleRemoveMedia = (type: 'image' | 'video', mediaItem: ExtendedMediaItem) => {
     if (editingPost) {
       if (type === 'image') {
         setEditingPost({
           ...editingPost,
-          images: editingPost.images.filter((image) => image.id !== id),
+          images: editingPost.images.filter((image) => image !== mediaItem),
         });
       } else if (type === 'video') {
         setEditingPost({
           ...editingPost,
-          videos: editingPost.videos.filter((video) => video.id !== id),
+          videos: editingPost.videos.filter((video) => video !== mediaItem),
+        });
+      }
+    }
+  };
+
+  const handleAddMediaUrl = (type: 'image' | 'video', url: string) => {
+    if (editingPost) {
+      if (type === 'image') {
+        setEditingPost({
+          ...editingPost,
+          images: [
+            ...editingPost.images,
+            {
+              id: null, // Новые URL не имеют ID из БД
+              image_url: url,
+              isNew: true,
+            },
+          ],
+        });
+      } else if (type === 'video') {
+        setEditingPost({
+          ...editingPost,
+          videos: [
+            ...editingPost.videos,
+            {
+              id: null, // Новые URL не имеют ID из БД
+              video_url: url,
+              isNew: true,
+            },
+          ],
         });
       }
     }
@@ -236,9 +315,7 @@ function App() {
 
   return (
     <div
-      className={`min-h-screen ${
-        isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'
-      }`}
+      className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'}`}
     >
       <DarkModeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
       <div className="flex">
@@ -248,7 +325,7 @@ function App() {
 
         <div className="flex-grow flex justify-center">
           {isLoading ? (
-            <p>Loading posts...</p>
+            <p>Загрузка постов...</p>
           ) : error ? (
             <p className="text-red-500">{error}</p>
           ) : (
@@ -256,7 +333,7 @@ function App() {
               posts={filteredPosts}
               userData={userData}
               isDarkMode={isDarkMode}
-              startEditing={handleStartEditing}
+              startEditing={(post: ExtendedPost) => handleStartEditing(post)}
               showDeleteConfirmation={(id: number) => {
                 setShowDeleteDialog(true);
                 setPostToDelete(id);
@@ -283,6 +360,7 @@ function App() {
           onInputChange={handleInputChange}
           onFileInputChange={handleFileInputChange}
           onRemoveMedia={handleRemoveMedia}
+          onAddMediaUrl={handleAddMediaUrl}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
           onCancel={() => {

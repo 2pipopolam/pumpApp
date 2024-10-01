@@ -69,20 +69,20 @@ export const updateProfile = (id: number, profileData: Partial<Profile>): Promis
 
 
 
-
-export const createPost = (formData: FormData): Promise<AxiosResponse<Post>> => 
+export const createPost = (formData: FormData): Promise<AxiosResponse<Post>> =>
   api.post(`/posts/`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
   });
 
-export const updatePost = (id: number, formData: FormData): Promise<AxiosResponse<Post>> => 
+export const updatePost = (id: number, formData: FormData): Promise<AxiosResponse<Post>> =>
   api.patch(`/posts/${id}/`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
   });
 
-export const deletePost = (id: number): Promise<AxiosResponse<void>> => 
+export const deletePost = (id: number): Promise<AxiosResponse<void>> =>
   api.delete(`/posts/${id}/`);
+
