@@ -1,4 +1,3 @@
-// TrainingSessionDialog.tsx
 
 import React, { useState } from 'react';
 import { Modal, Button } from 'react-bootstrap';
@@ -6,6 +5,7 @@ import DatePicker from 'react-datepicker';
 import { createTrainingSession } from '../services/api';
 import { TrainingSession } from '../types';
 import moment from 'moment';
+import 'react-datepicker/dist/react-datepicker.css';
 
 interface TrainingSessionDialogProps {
   show: boolean;
@@ -58,7 +58,7 @@ const TrainingSessionDialog: React.FC<TrainingSessionDialogProps> = ({ show, onH
           <label>Дата:</label>
           <DatePicker
             selected={date}
-            onChange={(date) => setDate(date)}
+            onChange={(date: Date | null) => setDate(date)}
             dateFormat="yyyy-MM-dd"
             className="form-control"
           />
@@ -67,7 +67,7 @@ const TrainingSessionDialog: React.FC<TrainingSessionDialogProps> = ({ show, onH
           <label>Время:</label>
           <DatePicker
             selected={time}
-            onChange={(time) => setTime(time)}
+            onChange={(time: Date | null) => setTime(time)}
             showTimeSelect
             showTimeSelectOnly
             timeIntervals={15}

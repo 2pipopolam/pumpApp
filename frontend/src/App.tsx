@@ -26,6 +26,7 @@ import TrainingCalendar from './components/TrainingCalendar';
 import { AxiosResponse } from 'axios';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 
+
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [posts, setPosts] = useState<ExtendedPost[]>([]);
