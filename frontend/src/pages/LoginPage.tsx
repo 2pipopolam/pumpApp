@@ -1,13 +1,12 @@
+// src/pages/LoginPage.tsx
+
 import React, { useState, useContext } from 'react';
-
-import { api, API_URL } from '../services/api';
-import axios from 'axios'; // Также добавьте импорт axios
-
-import { login, obtainToken } from '../services/api';
+import { obtainToken } from '../services/api';
 import { AuthContext } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { GoogleLogin, googleLogout } from '@react-oauth/google';
-import jwt_decode from 'jwt-decode';
+import { GoogleLogin } from '@react-oauth/google';
+import { api, API_URL } from '../services/api';
+import axios from 'axios';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -36,7 +35,7 @@ const LoginPage: React.FC = () => {
       loginContext(response.data.access, response.data.refresh, userResponse.data.user);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.error || 'Произошла ошибка при входе.');
+      setError(err.response?.data?.detail || 'Произошла ошибка при входе.');
     }
   };
 
@@ -50,7 +49,7 @@ const LoginPage: React.FC = () => {
       loginContext(response.data.access, response.data.refresh, response.data.user);
       navigate('/');
     } catch (err) {
-      setError('Произошла ошибка при аутентификации через Google.');
+      setError(err.response?.data?.detail || 'Произошла ошибка при аутентификации через Google.');
       console.error(err);
     }
   };
@@ -62,8 +61,8 @@ const LoginPage: React.FC = () => {
   return (
     <div className="login-page">
       <h2>Вход</h2>
-      {error && <p className="error">{error}</p>}
-      <form onSubmit={handleSubmit}>
+      {error && <p className="error text-red-500">{error}</p>}
+      <form onSubmit={handleSubmit} className="flex flex-col max-w-md mx-auto">
         <input 
           type="text" 
           name="username" 
@@ -71,6 +70,7 @@ const LoginPage: React.FC = () => {
           value={formData.username} 
           onChange={handleChange} 
           required 
+          className="mb-2 p-2 border rounded"
         />
         <input 
           type="password" 
@@ -79,10 +79,13 @@ const LoginPage: React.FC = () => {
           value={formData.password} 
           onChange={handleChange} 
           required 
+          className="mb-4 p-2 border rounded"
         />
-        <button type="submit">Войти</button>
+        <button type="submit" className="p-2 bg-blue-500 text-white rounded">
+          Войти
+        </button>
       </form>
-      <div className="google-login">
+      <div className="google-login flex justify-center mt-4">
         <GoogleLogin
           onSuccess={handleGoogleSuccess}
           onError={handleGoogleFailure}

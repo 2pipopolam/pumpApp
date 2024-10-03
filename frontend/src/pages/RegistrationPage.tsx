@@ -1,3 +1,5 @@
+// src/pages/RegistrationPage.tsx
+
 import React, { useState, useContext } from 'react';
 import { register } from '../services/api';
 import { AuthContext } from '../contexts/AuthContext';
@@ -25,20 +27,24 @@ const RegistrationPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (formData.password !== formData.password2) {
+      setError('Пароли не совпадают.');
+      return;
+    }
     try {
       const response = await register(formData);
       login(response.data.access, response.data.refresh, response.data.user);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data || 'Произошла ошибка при регистрации.');
+      setError(err.response?.data?.detail || 'Произошла ошибка при регистрации.');
     }
   };
 
   return (
     <div className="registration-page">
       <h2>Регистрация</h2>
-      {error && <p className="error">{error}</p>}
-      <form onSubmit={handleSubmit}>
+      {error && <p className="error text-red-500">{error}</p>}
+      <form onSubmit={handleSubmit} className="flex flex-col max-w-md mx-auto">
         <input 
           type="text" 
           name="username" 
@@ -46,6 +52,7 @@ const RegistrationPage: React.FC = () => {
           value={formData.username} 
           onChange={handleChange} 
           required 
+          className="mb-2 p-2 border rounded"
         />
         <input 
           type="email" 
@@ -54,6 +61,7 @@ const RegistrationPage: React.FC = () => {
           value={formData.email} 
           onChange={handleChange} 
           required 
+          className="mb-2 p-2 border rounded"
         />
         <input 
           type="password" 
@@ -62,6 +70,7 @@ const RegistrationPage: React.FC = () => {
           value={formData.password} 
           onChange={handleChange} 
           required 
+          className="mb-2 p-2 border rounded"
         />
         <input 
           type="password" 
@@ -70,8 +79,11 @@ const RegistrationPage: React.FC = () => {
           value={formData.password2} 
           onChange={handleChange} 
           required 
+          className="mb-4 p-2 border rounded"
         />
-        <button type="submit">Зарегистрироваться</button>
+        <button type="submit" className="p-2 bg-blue-500 text-white rounded">
+          Зарегистрироваться
+        </button>
       </form>
     </div>
   );

@@ -1,6 +1,6 @@
-// App.tsx
+// src/App.tsx
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import {
   UserData,
   ExtendedPost,
@@ -25,7 +25,14 @@ import EditProfilePictureDialog from './components/EditProfilePictureDialog';
 import TrainingCalendar from './components/TrainingCalendar';
 import { AxiosResponse } from 'axios';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import { AuthProvider, AuthContext } from './contexts/AuthContext';
+import RegistrationPage from './pages/RegistrationPage';
+import LoginPage from './pages/LoginPage';
+import PrivateRoute from './components/PrivateRoute';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
+// Получаем GOOGLE_CLIENT_ID из переменных окружения
+const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_OAUTH2_KEY || '';
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -41,12 +48,14 @@ function App() {
   const [userData, setUserData] = useState<UserData>({
     id: 1,
     username: '',
-    email:'',
-    profilePicture: '',
+    email: '',
+    profilePicture: '', // Обязательно строка
   });
   const [isEditingProfilePicture, setIsEditingProfilePicture] = useState(false);
 
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
+
+  const { login, logout, user } = useContext(AuthContext); // Используем контекст аутентификации
 
   const fetchUserProfile = useCallback(async () => {
     try {
@@ -55,11 +64,14 @@ function App() {
         id: response.data.id,
         username: response.data.username,
         email: response.data.email,
-        profilePicture: response.data.avatar,
+        profilePicture: response.data.avatar || '', // Обеспечиваем, что всегда строка
       });
     } catch (err) {
       console.error('Ошибка при получении профиля пользователя:', err);
-      setError('Не удалось получить профиль пользователя. Используется аватар по умолчанию.');
+      setError(
+        err.response?.data?.detail ||
+          'Не удалось получить профиль пользователя. Используется аватар по умолчанию.'
+      );
     }
   }, []);
 
@@ -76,7 +88,10 @@ function App() {
         }))
       );
     } catch (err) {
-      setError('Не удалось загрузить посты. Пожалуйста, попробуйте позже.');
+      setError(
+        err.response?.data?.detail ||
+          'Не удалось загрузить посты. Пожалуйста, попробуйте позже.'
+      );
       console.error('Ошибка при загрузке постов:', err);
     } finally {
       setIsLoading(false);
@@ -95,7 +110,10 @@ function App() {
       setShowDeleteDialog(false);
       setPostToDelete(null);
     } catch (err) {
-      setError('Не удалось удалить пост. Пожалуйста, попробуйте снова.');
+      setError(
+        err.response?.data?.detail ||
+          'Не удалось удалить пост. Пожалуйста, попробуйте снова.'
+      );
       console.error('Ошибка при удалении поста:', err);
     }
   };
@@ -120,7 +138,7 @@ function App() {
       profile: {
         id: userData.id,
         user: userData.id,
-        avatar: userData.profilePicture,
+        avatar: userData.profilePicture || '', // Обеспечиваем, что всегда строка
         username: userData.username,
         email: userData.email,
       },
@@ -182,8 +200,14 @@ function App() {
             ...posts,
             {
               ...response.data,
-              images: response.data.images.map((image: MediaItem) => ({ ...image, file: undefined })),
-              videos: response.data.videos.map((video: MediaItem) => ({ ...video, file: undefined })),
+              images: response.data.images.map((image: MediaItem) => ({
+                ...image,
+                file: undefined,
+              })),
+              videos: response.data.videos.map((video: MediaItem) => ({
+                ...video,
+                file: undefined,
+              })),
             },
           ]);
           setIsCreating(false);
@@ -194,8 +218,14 @@ function App() {
               post.id === editingPost.id
                 ? {
                     ...response.data,
-                    images: response.data.images.map((image: MediaItem) => ({ ...image, file: undefined })),
-                    videos: response.data.videos.map((video: MediaItem) => ({ ...video, file: undefined })),
+                    images: response.data.images.map((image: MediaItem) => ({
+                      ...image,
+                      file: undefined,
+                    })),
+                    videos: response.data.videos.map((video: MediaItem) => ({
+                      ...video,
+                      file: undefined,
+                    })),
                   }
                 : post
             )
@@ -204,7 +234,10 @@ function App() {
         }
         setEditingPost(null);
       } catch (err) {
-        setError('Не удалось сохранить пост. Пожалуйста, попробуйте снова.');
+        setError(
+          err.response?.data?.detail ||
+            'Не удалось сохранить пост. Пожалуйста, попробуйте снова.'
+        );
         console.error('Ошибка при сохранении поста:', err);
       }
     }
@@ -340,14 +373,18 @@ function App() {
       const response = await updateProfile(formData);
       setUserData({
         ...userData,
-        profilePicture: response.data.avatar,
+        profilePicture: response.data.avatar || '', // Обеспечиваем, что всегда строка
       });
     } catch (err) {
-      setError('Не удалось обновить аватар. Пожалуйста, попробуйте снова.');
+      setError(
+        err.response?.data?.detail ||
+          'Не удалось обновить аватар. Пожалуйста, попробуйте снова.'
+      );
       console.error('Ошибка при обновлении аватара:', err);
     }
   };
 
+  // Определяем filteredPosts внутри компонента, перед возвратом JSX
   const filteredPosts = posts.filter(
     (post) =>
       post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -356,102 +393,149 @@ function App() {
   );
 
   return (
-    <Router>
-      <div
-        className={`min-h-screen ${
-          isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'
-        }`}
-      >
-        <DarkModeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
-        <nav className="p-4">
-          <Link to="/" className="mr-4">
-            Главная
-          </Link>
-          <Link to="/calendar">Календарь тренировок</Link>
-        </nav>
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <div className="flex">
-                <div className="w-64 p-4 fixed left-10 top-12 h-full flex flex-col">
-                  <SearchBar
-                    searchTerm={searchTerm}
-                    setSearchTerm={setSearchTerm}
-                    isDarkMode={isDarkMode}
-                  />
-                </div>
+    <AuthProvider>
+      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+        <Router>
+          <div
+            className={`min-h-screen ${
+              isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'
+            }`}
+          >
+            <DarkModeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+            <Routes>
+              {/* Маршрут для регистрации */}
+              <Route path="/register" element={<RegistrationPage />} />
+              {/* Маршрут для входа */}
+              <Route path="/login" element={<LoginPage />} />
+              {/* Главная страница, защищённая авторизацией */}
+              <Route
+                path="/"
+                element={
+                  <PrivateRoute>
+                    <div className="flex">
+                      {/* Навигационная панель, отображается только для защищённых маршрутов */}
+                      <nav className="w-64 p-4 bg-gray-200 dark:bg-gray-800 fixed top-0 left-0 h-full flex flex-col">
+                        <Link to="/" className="mb-4 text-xl font-bold text-gray-800 dark:text-white">
+                          Главная
+                        </Link>
+                        <Link to="/calendar" className="mb-4 text-gray-800 dark:text-white">
+                          Календарь тренировок
+                        </Link>
+                        <button
+                          onClick={logout}
+                          className="mt-auto p-2 bg-red-500 text-white rounded"
+                        >
+                          Выйти
+                        </button>
+                      </nav>
 
-                <div className="flex-grow flex justify-center">
-                  {isLoading ? (
-                    <p>Загрузка постов...</p>
-                  ) : error ? (
-                    <p className="text-red-500">{error}</p>
-                  ) : (
-                    <PostList
-                      posts={filteredPosts}
-                      userData={userData}
-                      isDarkMode={isDarkMode}
-                      startEditing={(post: ExtendedPost) => handleStartEditing(post)}
-                      showDeleteConfirmation={(id: number) => {
-                        setShowDeleteDialog(true);
-                        setPostToDelete(id);
-                      }}
-                      addNewPost={handleAddNewPost}
-                      onEditProfilePicture={() => setIsEditingProfilePicture(true)}
-                    />
-                  )}
-                </div>
+                      {/* Основной контент */}
+                      <div className="ml-64 p-4 flex-grow">
+                        <SearchBar
+                          searchTerm={searchTerm}
+                          setSearchTerm={setSearchTerm}
+                          isDarkMode={isDarkMode}
+                        />
+                        <button
+                          onClick={handleAddNewPost}
+                          className="mt-4 p-2 bg-green-500 text-white rounded"
+                        >
+                          Добавить новый пост
+                        </button>
+                        <button
+                          onClick={() => setIsEditingProfilePicture(true)}
+                          className="mt-2 p-2 bg-yellow-500 text-white rounded"
+                        >
+                          Изменить аватар
+                        </button>
 
-                {showDeleteDialog && (
-                  <DeleteDialog
-                    isDarkMode={isDarkMode}
-                    onCancel={() => setShowDeleteDialog(false)}
-                    onConfirm={() => postToDelete !== null && handleDeletePost(postToDelete)}
-                  />
-                )}
+                        {isLoading ? (
+                          <p>Загрузка постов...</p>
+                        ) : error ? (
+                          <p className="text-red-500">{error}</p>
+                        ) : (
+                          <PostList
+                            posts={filteredPosts}
+                            userData={userData}
+                            isDarkMode={isDarkMode}
+                            startEditing={handleStartEditing}
+                            showDeleteConfirmation={(id: number) => {
+                              setShowDeleteDialog(true);
+                              setPostToDelete(id);
+                            }}
+                            addNewPost={handleAddNewPost}
+                            onEditProfilePicture={() => setIsEditingProfilePicture(true)}
+                          />
+                        )}
+                      </div>
 
-                {(isEditing || isCreating) && editingPost && (
-                  <EditPostDialog
-                    isDarkMode={isDarkMode}
-                    isCreating={isCreating}
-                    editingPost={editingPost}
-                    onInputChange={handleInputChange}
-                    onFileInputChange={handleFileInputChange}
-                    onRemoveMedia={handleRemoveMedia}
-                    onAddMediaUrl={handleAddMediaUrl}
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                    onCancel={() => {
-                      setIsEditing(false);
-                      setIsCreating(false);
-                      setEditingPost(null);
-                    }}
-                    onSave={handleSavePost}
-                  />
-                )}
+                      {/* Диалог удаления поста */}
+                      {showDeleteDialog && (
+                        <DeleteDialog
+                          isDarkMode={isDarkMode}
+                          onCancel={() => setShowDeleteDialog(false)}
+                          onConfirm={() => postToDelete !== null && handleDeletePost(postToDelete)}
+                        />
+                      )}
 
-                {isEditingProfilePicture && (
-                  <EditProfilePictureDialog
-                    isDarkMode={isDarkMode}
-                    userData={userData}
-                    onCancel={() => setIsEditingProfilePicture(false)}
-                    onSave={(newProfilePicture) => {
-                      handleSaveProfilePicture(newProfilePicture);
-                      setIsEditingProfilePicture(false);
-                    }}
-                  />
-                )}
+                      {/* Диалог редактирования/создания поста */}
+                      {(isEditing || isCreating) && editingPost && (
+                        <EditPostDialog
+                          isDarkMode={isDarkMode}
+                          isCreating={isCreating}
+                          editingPost={editingPost}
+                          onInputChange={handleInputChange}
+                          onFileInputChange={handleFileInputChange}
+                          onRemoveMedia={handleRemoveMedia}
+                          onAddMediaUrl={handleAddMediaUrl}
+                          onDragOver={handleDragOver}
+                          onDrop={handleDrop}
+                          onCancel={() => {
+                            setIsEditing(false);
+                            setIsCreating(false);
+                            setEditingPost(null);
+                          }}
+                          onSave={handleSavePost}
+                        />
+                      )}
+
+                      {/* Диалог редактирования аватара */}
+                      {isEditingProfilePicture && (
+                        <EditProfilePictureDialog
+                          isDarkMode={isDarkMode}
+                          userData={userData}
+                          onCancel={() => setIsEditingProfilePicture(false)}
+                          onSave={(newProfilePicture) => {
+                            handleSaveProfilePicture(newProfilePicture);
+                            setIsEditingProfilePicture(false);
+                          }}
+                        />
+                      )}
+                    </div>
+                  </PrivateRoute>
+                }
+              />
+              {/* Маршрут для календаря тренировок */}
+              <Route
+                path="/calendar"
+                element={
+                  <PrivateRoute>
+                    <TrainingCalendar isDarkMode={isDarkMode} />
+                  </PrivateRoute>
+                }
+              />
+            </Routes>
+
+            {/* Сообщение об ошибке */}
+            {error && (
+              <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded">
+                {error}
               </div>
-            }
-          />
-          <Route
-            path="/calendar"
-            element={<TrainingCalendar isDarkMode={isDarkMode} />}
-          />
-        </Routes>
-      </div>
-    </Router>
+            )}
+          </div>
+        </Router>
+      </GoogleOAuthProvider>
+    </AuthProvider>
   );
 }
 

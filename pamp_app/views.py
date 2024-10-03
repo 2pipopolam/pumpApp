@@ -6,8 +6,10 @@ from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import api_view , action , permission_classes
+from rest_framework.permissions import AllowAny
 #from rest_framework.parsers import MultiPartParser, FormParser
 from .models import Profile, Post,TrainingSession
+from .serializers import RegisterSerializer
 
 from .serializers import (
     ProfileSerializer,
@@ -23,16 +25,6 @@ from .serializers import (
 # from rest_framework import status
 # from rest_framework.views import APIView
 # from rest_framework.permissions import IsAuthenticated
-
-
-def post_list(request):
-    posts = Post.objects.all()
-    return render(request, 'pamp_app/post_list.html', {'posts': posts})
-
-def post_detail(request, id):
-    post = get_object_or_404(Post, id=id)
-    return render(request, 'pamp_app/post_detail.html', {'post': post})
-
 
 
 class ProfileViewSet(viewsets.ModelViewSet):
@@ -85,6 +77,15 @@ class PostViewSet(viewsets.ModelViewSet):
 
 
 
+def post_list(request):
+    posts = Post.objects.all()
+    return render(request, 'pamp_app/post_list.html', {'posts': posts})
+
+def post_detail(request, id):
+    post = get_object_or_404(Post, id=id)
+    return render(request, 'pamp_app/post_detail.html', {'post': post})
+
+
 class TrainingSessionViewSet(viewsets.ModelViewSet):
     serializer_class = TrainingSessionSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -92,22 +93,8 @@ class TrainingSessionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return TrainingSession.objects.filter(profile=self.request.user.profile)
 
-
-
-# class FileUploadView(APIView):
-#     parser_classes = (MultiPartParser, FormParser)
-
-#     def post(self, request, *args, **kwargs):
-#         file_serializer = FileSerializer(data=request.data)
-#         if file_serializer.is_valid():
-#             file_serializer.save()
-#             return Response(file_serializer.data, status=status.HTTP_201_CREATED)
-#         else:
-#             return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def register(request):
     serializer = RegisterSerializer(data=request.data)
     if serializer.is_valid():
@@ -159,18 +146,3 @@ def user_posts(request):
 # Render React app
 def index(request):
     return render(request, 'index.html')
-
-
-
-
-# class PostCreateAPIView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def post(self, request, format=None):
-#         serializer = PostSerializer(data=request.data, context={'request': request})
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_201_CREATED)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
