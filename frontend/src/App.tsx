@@ -41,6 +41,7 @@ function App() {
   const [userData, setUserData] = useState<UserData>({
     id: 1,
     username: '',
+    email:'',
     profilePicture: '',
   });
   const [isEditingProfilePicture, setIsEditingProfilePicture] = useState(false);
@@ -53,6 +54,7 @@ function App() {
       setUserData({
         id: response.data.id,
         username: response.data.username,
+        email: response.data.email,
         profilePicture: response.data.avatar,
       });
     } catch (err) {
@@ -120,6 +122,7 @@ function App() {
         user: userData.id,
         avatar: userData.profilePicture,
         username: userData.username,
+        email: userData.email,
       },
     });
   };

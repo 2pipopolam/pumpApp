@@ -8,11 +8,22 @@ django==5.1.1
 djangorestframework==3.15.2                                                                                                                                                                                                                  
 sqlparse==0.5.1   
 
-django-extensions
-social-auth-app-django
-werkzeug
-pyOpenSSL
-
+#AUTHs
+cffi==1.17.1
+cryptography==43.0.1
+defusedxml==0.7.1
+django-extensions==3.2.3
+markupsafe==2.1.5
+oauthlib==3.2.2
+pycparser==2.22
+pyjwt==2.9.0
+pyopenssl==24.2.1
+python3-openid==3.2.0
+requests-oauthlib==2.0.0
+social-auth-app-django==5.4.2
+social-auth-core==4.5.4
+werkzeug==3.0.4
+djangorestframework-simplejwt==5.3.1
 
 #TELEGRAM BOT DEPENDS
 requests

@@ -22,6 +22,12 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
 from pamp_app import views
+
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
+
 #from pamp_app.views import FileUploadView
 
 
@@ -35,9 +41,12 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/user-profile/', views.user_profile, name='user-profile'),
     path('api/user-posts/', views.user_posts, name='user-posts'),
-    #path(views.login , name='login'), для login page
-    #path(views.registration,name='register'), для registration page
-    
+    path('api/register/', views.register, name='register'),
+    path('api/login/', views.login_view, name='login'),
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+
     path(
         'social-auth/',
         include('social_django.urls', namespace='social')

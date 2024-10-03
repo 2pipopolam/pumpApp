@@ -1,12 +1,24 @@
 import os
 from django.conf import settings
 from django.shortcuts import render,get_object_or_404
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
-from rest_framework.decorators import api_view , action
+from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.decorators import api_view , action , permission_classes
 #from rest_framework.parsers import MultiPartParser, FormParser
 from .models import Profile, Post,TrainingSession
-from .serializers import ProfileSerializer, PostSerializer, TrainingSessionSerializer
+
+from .serializers import (
+    ProfileSerializer,
+    PostSerializer,
+    TrainingSessionSerializer,
+    RegisterSerializer,
+    LoginSerializer,
+    UserSerializer
+)
+
+
 
 # from rest_framework import status
 # from rest_framework.views import APIView
@@ -93,6 +105,40 @@ class TrainingSessionViewSet(viewsets.ModelViewSet):
 #         else:
 #             return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+
+@api_view(['POST'])
+def register(request):
+    serializer = RegisterSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.save()
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'user': UserSerializer(user).data,
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+@api_view(['POST'])
+def login_view(request):
+    serializer = LoginSerializer(data=request.data)
+    if serializer.is_valid():
+        username = serializer.validated_data['username']
+        password = serializer.validated_data['password']
+        user = authenticate(username=username, password=password)
+        if user:
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'user': UserSerializer(user).data,
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }, status=status.HTTP_200_OK)
+        return Response({'error': 'Неверные учетные данные.'}, status=status.HTTP_401_UNAUTHORIZED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 

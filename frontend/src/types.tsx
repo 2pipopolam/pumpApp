@@ -1,16 +1,18 @@
 // types.tsx
 
 export interface UserData {
-id: number;
-username: string;
-profilePicture: string;
+  id: number;
+  username: string;
+  email: string;
+  profilePicture: string;
 }
 
 export interface Profile {
-id: number;
-user: number;
-username: string;
-avatar: string;
+  id: number;
+  user: number;
+  username: string;
+  email: string;
+  avatar: string;
 }
 
 
