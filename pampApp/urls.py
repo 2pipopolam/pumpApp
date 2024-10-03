@@ -35,6 +35,14 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/user-profile/', views.user_profile, name='user-profile'),
     path('api/user-posts/', views.user_posts, name='user-posts'),
+    #path(views.login , name='login'), для login page
+    #path(views.registration,name='register'), для registration page
+    
+    path(
+        'social-auth/',
+        include('social_django.urls', namespace='social')
+    ),
+
     path('', views.index, name='index'),
 ]
 

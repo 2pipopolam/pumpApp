@@ -7,13 +7,14 @@ class Profile(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE
     )
-
+    
+    #username = models.TextField(blank = False)
+    
     avatar = models.ImageField(
         null=True,
         blank=True,
         upload_to='user_avatars/%Y/%m/%d/',
     )
-
 
     def __str__(self):
         return f'Profile of {self.user.username}'

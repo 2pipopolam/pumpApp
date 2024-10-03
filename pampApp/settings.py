@@ -31,11 +31,39 @@ SECRET_KEY = 'django-insecure-)lu=yhos5vgu66lp3co!cnm2x!xl1aw)lg25^arp7t0fj&-fqy
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost','0.0.0.0', '127.0.0.1']
+ALLOWED_HOSTS = ['pumpapp.com','localhost','0.0.0.0', '127.0.0.1']
+
+
+#AUTHENTICATION_
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'pamp_app.authentication.EmailAuthBackend',
+    'social_core.backends.google.GoogleOAuth2',
+]
+
+#GOOGLE OAUTH2
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config('GOOGLE_OAUTH2_KEY')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config('GOOGLE_OAUTH2_SECRET')
+
+
+#SOCIAL AUTH
+SOCIAL_AUTH_PIPELINE = [
+    'social_core.pipeline.social_auth.social_details',
+    'social_core.pipeline.social_auth.social_uid',
+    'social_core.pipeline.social_auth.auth_allowed',
+    'social_core.pipeline.social_auth.social_user',
+    'social_core.pipeline.user.get_username',
+    'social_core.pipeline.user.create_user',
+    'pamp_app.authentication.create_profile',
+    'social_core.pipeline.social_auth.associate_user',
+    'social_core.pipeline.social_auth.load_extra_data',
+    'social_core.pipeline.user.user_details',
+]
+
+
 
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -44,9 +72,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.postgres',   
+    
     'rest_framework',
     'corsheaders',
-
+    'django_extensions',
+    
     'pamp_app',
 ]
 
@@ -67,6 +97,7 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://pumpapp.com:3000"
 ]
 
 
