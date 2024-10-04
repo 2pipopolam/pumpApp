@@ -109,7 +109,7 @@ function App() {
       setPosts(posts.filter((post) => post.id !== id));
       setShowDeleteDialog(false);
       setPostToDelete(null);
-    } catch (err) {
+    } catch (err ) {
       setError(
         err.response?.data?.detail ||
           'Не удалось удалить пост. Пожалуйста, попробуйте снова.'
@@ -436,19 +436,6 @@ function App() {
                           setSearchTerm={setSearchTerm}
                           isDarkMode={isDarkMode}
                         />
-                        <button
-                          onClick={handleAddNewPost}
-                          className="mt-4 p-2 bg-green-500 text-white rounded"
-                        >
-                          Добавить новый пост
-                        </button>
-                        <button
-                          onClick={() => setIsEditingProfilePicture(true)}
-                          className="mt-2 p-2 bg-yellow-500 text-white rounded"
-                        >
-                          Изменить аватар
-                        </button>
-
                         {isLoading ? (
                           <p>Загрузка постов...</p>
                         ) : error ? (

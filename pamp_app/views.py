@@ -34,19 +34,18 @@ class ProfileViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Profile.objects.filter(user=self.request.user)
 
-    @action(detail=False, methods=['get', 'patch', 'put'])
+
+    @action(detail=False, methods=['get', 'put', 'patch'], url_path='me')
     def me(self, request):
         profile = get_object_or_404(Profile, user=request.user)
         if request.method == 'GET':
             serializer = self.get_serializer(profile)
             return Response(serializer.data)
-        elif request.method in ['PATCH', 'PUT']:
+        elif request.method in ['PUT', 'PATCH']:
             serializer = self.get_serializer(profile, data=request.data, partial=(request.method == 'PATCH'))
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data)
-
-
 
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -93,6 +92,7 @@ class TrainingSessionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return TrainingSession.objects.filter(profile=self.request.user.profile)
 
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register(request):
@@ -111,6 +111,7 @@ def register(request):
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def login_view(request):
     serializer = LoginSerializer(data=request.data)
     if serializer.is_valid():
@@ -129,11 +130,27 @@ def login_view(request):
 
 
 
-@api_view(['GET'])
+
+@api_view(['GET', 'PUT', 'PATCH'])
+@permission_classes([permissions.IsAuthenticated])
 def user_profile(request):
     profile = request.user.profile
-    serializer = ProfileSerializer(profile)
-    return Response(serializer.data)
+    if request.method == 'GET':
+        serializer = ProfileSerializer(profile)
+        return Response(serializer.data)
+    elif request.method in ['PUT', 'PATCH']:
+        partial = request.method == 'PATCH'
+        serializer = ProfileSerializer(profile, data=request.data, partial=partial)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
 
 
 @api_view(['GET'])

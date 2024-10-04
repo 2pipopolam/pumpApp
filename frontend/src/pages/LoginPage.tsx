@@ -1,4 +1,4 @@
-// src/pages/LoginPage.tsx
+// Пример для LoginPage.tsx
 
 import React, { useState, useContext } from 'react';
 import { obtainToken } from '../services/api';
@@ -30,22 +30,33 @@ const LoginPage: React.FC = () => {
     setError(null);
     try {
       const response = await obtainToken(formData);
+      // Сохранение токенов в localStorage
+      localStorage.setItem('accessToken', response.data.access);
+      localStorage.setItem('refreshToken', response.data.refresh);
+      
       // Получение пользовательских данных
       const userResponse = await api.get('/user-profile/');
+      
+      // Сохранение данных пользователя
       loginContext(response.data.access, response.data.refresh, userResponse.data.user);
+      
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.detail || 'Произошла ошибка при входе.');
     }
   };
 
+  // Обработка успешной аутентификации через Google
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
-      // Отправьте токен на бэкенд для аутентификации
       const response = await axios.post(`${API_URL}/social-auth/login/google-oauth2/`, {
         access_token: credentialResponse.credential,
       });
-      // Предполагается, что бэкенд возвращает JWT токены и данные пользователя
+      // Сохранение токенов в localStorage
+      localStorage.setItem('accessToken', response.data.access);
+      localStorage.setItem('refreshToken', response.data.refresh);
+      
+      // Сохранение данных пользователя
       loginContext(response.data.access, response.data.refresh, response.data.user);
       navigate('/');
     } catch (err) {

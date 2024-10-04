@@ -43,6 +43,7 @@ class LoginSerializer(serializers.Serializer):
 #Profile
 class ProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
+    user = UserSerializer(read_only=True)  # Сделать user только для чтения
 
     class Meta:
         model = Profile

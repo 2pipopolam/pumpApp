@@ -1,84 +1,40 @@
 import axios, { AxiosResponse } from 'axios';
 import { MediaItem , Post , Profile, TrainingSession } from '../types';
 
-export const API_URL = 'http://localhost:8000/api';
-
+export const API_URL =  'http://localhost:8000/api/';
 
 export const api = axios.create({
   baseURL: API_URL,
-  // auth: {
-  //   username: 'pipopolam',
-  //   password: 'abc123shws'
-  // }
 });
 
-
-// interceptor JWT токена в заголовки 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token');
-  if (token && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`;
+// Добавляем перехватчик запросов для добавления токенов
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
-  return config;
-});
+);
 
+// Функции API
+export const getProfile = () => api.get('/user-profile/');
+export const updateProfile = (data: FormData) => api.put('/profiles/me/', data);
+export const getPosts = () => api.get('/posts/');
+export const createPost = (data: FormData) => api.post('/posts/', data);
+export const updatePost = (id: number, data: FormData) => api.put(`/posts/${id}/`, data);
+export const deletePost = (id: number) => api.delete(`/posts/${id}/`);
 
-
-// Регистрация
-export const register = (data: { username: string; email: string; password: string; password2: string; }): Promise<AxiosResponse<any>> =>
-  api.post('/register/', data);
-
-// Логин
-export const login = (data: { username: string; password: string; }): Promise<AxiosResponse<any>> =>
-  api.post('/login/', data);
-
-// Получение токенов
-export const obtainToken = (data: { username: string; password: string; }): Promise<AxiosResponse<any>> =>
-  api.post('/token/', data);
+// Функции для регистрации и получения токенов
+export const register = (data: any) => api.post('/register/', data);
+export const obtainToken = (data: any) => api.post('/token/', data);
 
 // Обновление токенов
-export const refreshToken = (data: { refresh: string; }): Promise<AxiosResponse<any>> =>
-  api.post('/token/refresh/', data);
-
-
-//Post
-export const getPosts = (): Promise<AxiosResponse<Post[]>> => 
-  api.get(`${API_URL}/posts/`);
-
-export const getPost = (id: number): Promise<AxiosResponse<Post>> => 
-  api.get(`${API_URL}/posts/${id}/`);
-
-export const createPost = (formData: FormData): Promise<AxiosResponse<Post>> =>
-  api.post(`/posts/`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-
-export const updatePost = (id: number, formData: FormData): Promise<AxiosResponse<Post>> =>
-  api.patch(`/posts/${id}/`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-
-export const deletePost = (id: number): Promise<AxiosResponse<void>> =>
-  api.delete(`/posts/${id}/`);
-
-
-//Profile
-export const getProfile = (): Promise<AxiosResponse<Profile>> =>
-  api.get(`/profiles/me/`);
-
-export const updateProfile = (formData: FormData): Promise<AxiosResponse<Profile>> =>
-  api.patch(`/profiles/me/`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-
-export const getProfiles = (): Promise<AxiosResponse<Profile[]>> => 
-  api.get(`${API_URL}/profiles/`);
+export const refreshToken = (refresh: string) => api.post('/token/refresh/', { refresh });
 
 
 //TrainingSession

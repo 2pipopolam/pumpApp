@@ -1,13 +1,20 @@
 // src/contexts/AuthContext.tsx
 
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
-import { UserData } from '../types';
+import React, { createContext, useState, ReactNode, useEffect } from 'react';
+import { api, refreshToken as refreshTokenAPI } from '../services/api';
+
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  avatar: string | null;
+}
 
 interface AuthContextType {
-  user: UserData | null;
+  user: User | null;
   accessToken: string | null;
   refreshToken: string | null;
-  login: (access: string, refresh: string, user: UserData) => void;
+  login: (access: string, refresh: string, user: User) => void;
   logout: () => void;
 }
 
@@ -19,31 +26,68 @@ export const AuthContext = createContext<AuthContextType>({
   logout: () => {},
 });
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserData | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(localStorage.getItem('access_token'));
-  const [refreshToken, setRefreshToken] = useState<string | null>(localStorage.getItem('refresh_token'));
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [refreshTokenState, setRefreshTokenState] = useState<string | null>(null);
 
-  const login = (access: string, refresh: string, userData: UserData) => {
+  const login = (access: string, refresh: string, userData: User) => {
     setAccessToken(access);
-    setRefreshToken(refresh);
+    setRefreshTokenState(refresh);
     setUser(userData);
-    localStorage.setItem('access_token', access);
-    localStorage.setItem('refresh_token', refresh);
+    localStorage.setItem('accessToken', access);
+    localStorage.setItem('refreshToken', refresh);
   };
 
   const logout = () => {
     setAccessToken(null);
-    setRefreshToken(null);
+    setRefreshTokenState(null);
     setUser(null);
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
   };
 
-  // Вы можете добавить логику обновления токенов здесь
+  // Инициализация состояния из localStorage при загрузке приложения
+  useEffect(() => {
+    const storedAccessToken = localStorage.getItem('accessToken');
+    const storedRefreshToken = localStorage.getItem('refreshToken');
+
+    if (storedAccessToken && storedRefreshToken) {
+      setAccessToken(storedAccessToken);
+      setRefreshTokenState(storedRefreshToken);
+      // Получение данных пользователя
+      api.get('/user-profile/')
+        .then((response) => {
+          setUser(response.data.user);
+        })
+        .catch((err) => {
+          console.error('Ошибка при получении профиля пользователя:', err);
+          logout();
+        });
+    }
+  }, []);
+
+  // Обновление токенов при истечении access токена
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (refreshTokenState) {
+        try {
+          const response = await refreshTokenAPI(refreshTokenState);
+          const newAccess = response.data.access;
+          setAccessToken(newAccess);
+          localStorage.setItem('accessToken', newAccess);
+        } catch (err) {
+          console.error('Не удалось обновить токен:', err);
+          logout();
+        }
+      }
+    }, 15 * 60 * 1000); // Обновление каждые 15 минут
+
+    return () => clearInterval(interval);
+  }, [refreshTokenState]);
 
   return (
-    <AuthContext.Provider value={{ user, accessToken, refreshToken, login, logout }}>
+    <AuthContext.Provider value={{ user, accessToken, refreshToken: refreshTokenState, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
