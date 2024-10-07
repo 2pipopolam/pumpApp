@@ -21,6 +21,23 @@ from .serializers import (
 )
 
 
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from dj_rest_auth.registration.views import SocialLoginView
+
+
+
+class GoogleLogin(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+    callback_url = "http://localhost:3000"  # URL вашего React приложения
+    client_class = OAuth2Client
+
+@csrf_exempt
+def google_callback(request):
+    return JsonResponse({'message': 'Authentication successful'})
+
 
 # from rest_framework import status
 # from rest_framework.views import APIView

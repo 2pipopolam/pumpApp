@@ -39,12 +39,31 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'pamp_app.authentication.EmailAuthBackend',
     'social_core.backends.google.GoogleOAuth2',
+    'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 #GOOGLE OAUTH2
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config('GOOGLE_OAUTH2_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config('GOOGLE_OAUTH2_SECRET')
 SOCIAL_AUTH_URL_NAMESPACE = 'social'
+
+
+
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        }
+    }
+}
+
+SITE_ID = 1
+
 
 
 #SOCIAL AUTH
@@ -98,8 +117,18 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'django_extensions',
+
+    'rest_framework.authtoken',
     
     'pamp_app',
+
+
+
+    'dj_rest_auth',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 ]
 
 MIDDLEWARE = [
@@ -111,7 +140,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     
-
+    'allauth.account.middleware.AccountMiddleware',
     'corsheaders.middleware.CorsMiddleware',
 ]
 
@@ -119,7 +148,7 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "http://pumpapp.com:3000"
+    "http://pumpapp.com:3000",
 ]
 
 #для cookies

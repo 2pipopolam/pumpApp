@@ -23,6 +23,8 @@ from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
 from pamp_app import views
 
+from pamp_app.views import GoogleLogin
+
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -45,6 +47,14 @@ urlpatterns = [
     path('api/login/', views.login_view, name='login'),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    
+    path('auth/', include('dj_rest_auth.urls')),
+    path('auth/google/', include('allauth.socialaccount.urls')),
+    path('auth/google/callback/', views.google_callback, name='google_callback'),
+
+    path('auth/google/login/', GoogleLogin.as_view(), name='google_login'),
+
 
 
     path(
