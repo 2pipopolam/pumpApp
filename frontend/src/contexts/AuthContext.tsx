@@ -92,3 +92,57 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     </AuthContext.Provider>
   );
 };
+
+
+
+
+
+//import React, { createContext, useState, useEffect, ReactNode } from 'react';
+//import { useNavigate } from 'react-router-dom';
+
+// interface AuthContextType {
+//   user: any;
+//   login: (accessToken: string, refreshToken: string, user: any) => void;
+//   logout: () => void;
+// }
+
+
+
+
+
+// export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+//   const [user, setUser] = useState<any>(null);
+//   const navigate = useNavigate();
+
+//   useEffect(() => {
+//     // Проверка существующих токенов в localStorage
+//     const storedUser = localStorage.getItem('user');
+//     if (storedUser) {
+//       setUser(JSON.parse(storedUser));
+//     }
+//   }, []);
+
+//   const login = (accessToken: string, refreshToken: string, user: any) => {
+//     localStorage.setItem('accessToken', accessToken);
+//     localStorage.setItem('refreshToken', refreshToken);
+//     localStorage.setItem('user', JSON.stringify(user));
+//     setUser(user);
+//     navigate('/');
+//   };
+
+//   const logout = () => {
+//     localStorage.removeItem('accessToken');
+//     localStorage.removeItem('refreshToken');
+//     localStorage.removeItem('user');
+//     setUser(null);
+//     navigate('/login');
+//   };
+
+//   return (
+//     <AuthContext.Provider value={{ user, login, logout }}>
+//       {children}
+//     </AuthContext.Provider>
+//   );
+// };

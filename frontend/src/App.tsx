@@ -531,17 +531,47 @@
 //
 //
 
+// import React from 'react';
+// import { GoogleOAuthProvider } from '@react-oauth/google';
+// import GoogleAuth from './components/GoogleAuth';
+
+// const App: React.FC = () => {
+//   return (
+//     <GoogleOAuthProvider clientId="564387787347-fis4o93mrm0jc807r9neoelrcsqonadb.apps.googleusercontent.com">
+//       <div>
+//         <h1>Welcome to our app!</h1>
+//         <GoogleAuth />
+//       </div>
+//     </GoogleOAuthProvider>
+//   );
+// };
+
+// export default App;
+
+
+
+
 import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import GoogleAuth from './components/GoogleAuth';
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import RegistrationPage from './pages/RegistrationPage';
+import { AuthProvider } from './contexts/AuthContext'; // Контекст аутентификации
 
 const App: React.FC = () => {
   return (
     <GoogleOAuthProvider clientId="564387787347-fis4o93mrm0jc807r9neoelrcsqonadb.apps.googleusercontent.com">
-      <div>
-        <h1>Welcome to our app!</h1>
-        <GoogleAuth />
-      </div>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegistrationPage />} />
+          </Routes>
+        </Router>
+      </AuthProvider>
     </GoogleOAuthProvider>
   );
 };
