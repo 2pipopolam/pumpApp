@@ -25,6 +25,8 @@ import { AuthContext } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { AxiosResponse } from 'axios';
 
+const BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
+
 const HomePage: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [posts, setPosts] = useState<ExtendedPost[]>([]);
@@ -44,7 +46,7 @@ const HomePage: React.FC = () => {
   });
   const [isEditingProfilePicture, setIsEditingProfilePicture] = useState(false);
 
-  const { logout, user } = useContext(AuthContext); // Use AuthContext
+  const { logout, user } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
@@ -52,11 +54,15 @@ const HomePage: React.FC = () => {
   const fetchUserProfile = useCallback(async () => {
     try {
       const response = await getProfile();
+      const avatarPath = response.data.avatar || '';
+      // Append a timestamp to the avatar URL to prevent caching
+      const avatarUrl = avatarPath ? `${BASE_URL}${avatarPath}?t=${Date.now()}` : '';
+
       setUserData({
         id: response.data.id,
         username: response.data.username,
         email: response.data.email,
-        profilePicture: response.data.avatar || '',
+        profilePicture: avatarUrl,
       });
     } catch (err) {
       console.error('Ошибка при получении профиля пользователя:', err);
@@ -89,7 +95,7 @@ const HomePage: React.FC = () => {
       fetchPosts();
       fetchUserProfile();
     } else {
-      navigate('/login'); // Redirect to login if not authenticated
+      navigate('/login');
     }
   }, [fetchPosts, fetchUserProfile, user, navigate]);
 
@@ -150,15 +156,21 @@ const HomePage: React.FC = () => {
       existingImageIds.forEach((id) => formData.append('existing_images', id.toString()));
       existingVideoIds.forEach((id) => formData.append('existing_videos', id.toString()));
 
+      // Append new images
       editingPost.images.forEach((image) => {
         if (image.file) {
           formData.append('images', image.file);
+        } else if (image.image_url) {
+          formData.append('image_urls', image.image_url);
         }
       });
 
+      // Append new videos
       editingPost.videos.forEach((video) => {
         if (video.file) {
           formData.append('videos', video.file);
+        } else if (video.video_url) {
+          formData.append('video_urls', video.video_url);
         }
       });
 
@@ -335,21 +347,24 @@ const HomePage: React.FC = () => {
     }
 
     try {
-      const response = await updateProfile(formData);
-      setUserData({
-        ...userData,
-        profilePicture: response.data.avatar || '',
-      });
+      await updateProfile(formData);
+      // Fetch the updated user profile to refresh the userData state
+      await fetchUserProfile();
+      setIsEditingProfilePicture(false);
     } catch (err) {
       setError('Не удалось обновить аватар. Пожалуйста, попробуйте снова.');
       console.error('Ошибка при обновлении аватара:', err);
     }
   };
 
+  const buttonClass =
+    'w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-xl text-gray-600 hover:bg-gray-400 transition-colors duration-300';
+
   return (
     <div className="flex">
       {/* Navigation Panel */}
       <nav className="w-64 p-4 bg-gray-200 dark:bg-gray-800 fixed top-0 left-0 h-full flex flex-col">
+        {/* No avatar and username here */}
         <Link to="/" className="mb-4 text-xl font-bold text-gray-800 dark:text-white">
           Главная
         </Link>
@@ -373,26 +388,64 @@ const HomePage: React.FC = () => {
       <div className="ml-64 p-4 flex-grow">
         {user ? (
           <>
-            <DarkModeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
-            <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} isDarkMode={isDarkMode} />
-            {isLoading ? (
-              <p>Загрузка постов...</p>
-            ) : error ? (
-              <p className="text-red-500">{error}</p>
-            ) : (
-              <PostList
-                posts={posts}
-                userData={userData}
+            <div className="max-w-4xl w-full p-10">
+              {/* Avatar and Username above posts */}
+              <div className="flex items-center mb-6 mt-6 relative">
+                {userData.profilePicture ? (
+                  <img
+                    src={userData.profilePicture}
+                    alt="Аватар пользователя"
+                    className="w-36 h-36 rounded-full mr-8 cursor-pointer"
+                    onClick={() => setIsEditingProfilePicture(true)}
+                    style={{ cursor: 'pointer' }}
+                    onError={(e) => {
+                      e.currentTarget.src = '/path/to/default/avatar.png';
+                    }}
+                  />
+                ) : (
+                  <div
+                    className="w-36 h-36 rounded-full bg-gray-300 flex items-center justify-center cursor-pointer mr-8"
+                    onClick={() => setIsEditingProfilePicture(true)}
+                  >
+                    <span className="text-gray-700">Аватар</span>
+                  </div>
+                )}
+                <h2 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                  {userData.username}
+                </h2>
+                <button
+                  className={`absolute top-2 right-2 ${buttonClass}`}
+                  aria-label="Добавить новый пост"
+                  onClick={handleAddNewPost}
+                >
+                  +
+                </button>
+              </div>
+
+              {/* Rest of the content */}
+              <DarkModeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+              <SearchBar
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
                 isDarkMode={isDarkMode}
-                startEditing={handleStartEditing}
-                showDeleteConfirmation={(id: number) => {
-                  setShowDeleteDialog(true);
-                  setPostToDelete(id);
-                }}
-                addNewPost={handleAddNewPost}
-                onEditProfilePicture={() => setIsEditingProfilePicture(true)}
               />
-            )}
+              {isLoading ? (
+                <p>Загрузка постов...</p>
+              ) : error ? (
+                <p className="text-red-500">{error}</p>
+              ) : (
+                <PostList
+                  posts={posts}
+                  userData={userData}
+                  isDarkMode={isDarkMode}
+                  startEditing={handleStartEditing}
+                  showDeleteConfirmation={(id: number) => {
+                    setShowDeleteDialog(true);
+                    setPostToDelete(id);
+                  }}
+                />
+              )}
+            </div>
 
             {/* Delete Post Dialog */}
             {showDeleteDialog && (
@@ -437,7 +490,9 @@ const HomePage: React.FC = () => {
         ) : (
           <div className="flex flex-col items-center justify-center h-full">
             <h2 className="text-2xl mb-4 text-gray-800 dark:text-white">Добро пожаловать!</h2>
-            <p className="mb-6 text-gray-600 dark:text-gray-300">Пожалуйста, войдите через Google, чтобы продолжить.</p>
+            <p className="mb-6 text-gray-600 dark:text-gray-300">
+              Пожалуйста, войдите через Google, чтобы продолжить.
+            </p>
             <Link to="/login">
               <button className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600">
                 Войти

@@ -57,21 +57,20 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = ['id', 'user', 'username', 'avatar']
 
+
+
     def update(self, instance, validated_data):
         avatar = validated_data.get('avatar', None)
         if avatar == '':
             if instance.avatar:
                 instance.avatar.delete(save=False)
             instance.avatar = None
-        elif avatar is not None:
+        elif avatar:
             if instance.avatar:
                 instance.avatar.delete(save=False)
             instance.avatar = avatar
-
         instance.save()
         return instance
-
-
 
 
 
@@ -84,6 +83,7 @@ class PostImageSerializer(serializers.ModelSerializer):
         if not data.get('image') and not data.get('image_url'):
             raise serializers.ValidationError("Either image file or image URL must be provided.")
         return data
+
 
 class PostVideoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -120,6 +120,7 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         fields = ['id', 'title', 'images', 'videos', 'training_type', 'description', 'views', 'created_at', 'updated_at', 'profile']
 
+
     def create(self, validated_data):
         images_data = self.context['request'].FILES.getlist('images')
         images_url_data = self.context['request'].data.getlist('image_urls')
@@ -146,6 +147,7 @@ class PostSerializer(serializers.ModelSerializer):
             PostVideo.objects.create(post=post, video_url=video_url)
 
         return post
+
 
     def update(self, instance, validated_data):
         images_data = self.context['request'].FILES.getlist('images')

@@ -1,13 +1,12 @@
 // src/components/EditProfilePictureDialog.tsx
 
 import React, { useState } from 'react';
-import { updateProfile } from '../services/api';
 
 interface EditProfilePictureDialogProps {
   isDarkMode: boolean;
   userData: any;
   onCancel: () => void;
-  onSave: (newProfilePicture: File | null) => void;
+  onSave: (newProfilePicture: File | null) => Promise<void>;
 }
 
 const EditProfilePictureDialog: React.FC<EditProfilePictureDialogProps> = ({
@@ -30,19 +29,15 @@ const EditProfilePictureDialog: React.FC<EditProfilePictureDialogProps> = ({
 
   const handleSubmit = async () => {
     setError(null);
-    const formData = new FormData();
     if (selectedFile) {
-      formData.append('avatar', selectedFile);
+      try {
+        await onSave(selectedFile);
+        onCancel(); // Close the dialog
+      } catch (err) {
+        setError('Не удалось обновить аватар. Пожалуйста, попробуйте снова.');
+      }
     } else {
-      formData.append('avatar', '');
-    }
-
-    try {
-      await updateProfile(formData);
-      onSave(selectedFile);
-    } catch (err) {
-      setError(err.response?.data?.detail || 'Не удалось обновить аватар.');
-      console.error('Ошибка при обновлении аватара:', err);
+      setError('Пожалуйста, выберите изображение для аватара.');
     }
   };
 

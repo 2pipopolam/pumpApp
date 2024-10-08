@@ -56,10 +56,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
     serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        return Profile.objects.filter(user=self.request.user)
-
-
+   
     @action(detail=False, methods=['get', 'put', 'patch'], url_path='me')
     def me(self, request):
         profile = get_object_or_404(Profile, user=request.user)
@@ -71,6 +68,11 @@ class ProfileViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data)
+    
+    def get_queryset(self):
+        return Profile.objects.filter(user=self.request.user)
+
+
 
 
 class PostViewSet(viewsets.ModelViewSet):
