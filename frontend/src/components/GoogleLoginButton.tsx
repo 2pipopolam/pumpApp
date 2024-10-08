@@ -7,7 +7,7 @@ import React from 'react';
 const GoogleLoginButton: React.FC = () => {
   const handleLogin = () => {
     // Перенаправляем пользователя на эндпоинт аутентификации через Google на бэкенде
-    window.location.href = "http://localhost:8000/api/auth/social/google-oauth2/?next=/";
+    window.location.href = 'http://localhost:8000/auth/google/login/';
   };
 
   return (

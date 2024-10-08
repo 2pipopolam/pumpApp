@@ -49,9 +49,15 @@ const LoginPage: React.FC = () => {
   // Обработка успешной аутентификации через Google
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
-      const response = await axios.post(`${API_URL}social-auth/login/google-oauth2/`, {
-        access_token: credentialResponse.credential,
-      });
+        
+        console.log('Received id_token:', credentialResponse.credential);
+        
+        const response = await axios.post('http://localhost:8000/auth/google/login/', {
+          id_token: credentialResponse.credential,
+        });
+      // const response = await axios.post(`${API_URL}social-auth/login/google-oauth2/`, {
+      //   access_token: credentialResponse.credential,
+      // });
       // Сохранение токенов в localStorage
       localStorage.setItem('accessToken', response.data.access);
       localStorage.setItem('refreshToken', response.data.refresh);
@@ -60,8 +66,8 @@ const LoginPage: React.FC = () => {
       loginContext(response.data.access, response.data.refresh, response.data.user);
       navigate('/');
     } catch (err) {
+      console.error('Error:' ,err.response);
       setError(err.response?.data?.detail || 'Произошла ошибка при аутентификации через Google.');
-      console.error(err);
     }
   };
 

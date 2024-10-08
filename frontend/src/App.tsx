@@ -562,7 +562,7 @@ import { AuthProvider } from './contexts/AuthContext'; // Контекст ау�
 
 const App: React.FC = () => {
   return (
-    <GoogleOAuthProvider clientId="564387787347-fis4o93mrm0jc807r9neoelrcsqonadb.apps.googleusercontent.com">
+    <GoogleOAuthProvider clientId='564387787347-sleipefvloj4rvt9r33kfpnecnho0s5l.apps.googleusercontent.com'>
       <AuthProvider>
         <Router>
           <Routes>

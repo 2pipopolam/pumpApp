@@ -9,7 +9,7 @@ from rest_framework.decorators import api_view , action , permission_classes
 from rest_framework.permissions import AllowAny
 #from rest_framework.parsers import MultiPartParser, FormParser
 from .models import Profile, Post,TrainingSession
-from .serializers import RegisterSerializer
+
 
 from .serializers import (
     ProfileSerializer,
@@ -17,7 +17,8 @@ from .serializers import (
     TrainingSessionSerializer,
     RegisterSerializer,
     LoginSerializer,
-    UserSerializer
+    UserSerializer,
+    GoogleLoginSerializer
 )
 
 
@@ -31,8 +32,12 @@ from dj_rest_auth.registration.views import SocialLoginView
 
 class GoogleLogin(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
-    callback_url = "http://localhost:3000"  # URL вашего React приложения
+    callback_url = "http://localhost:3000"  # URL React
     client_class = OAuth2Client
+    serializer_class = GoogleLoginSerializer
+
+
+
 
 @csrf_exempt
 def google_callback(request):
@@ -178,5 +183,5 @@ def user_posts(request):
 
 
 # Render React app
-def index(request):
-    return render(request, 'index.html')
+# def index(request):
+#     return render(request, 'index.html')

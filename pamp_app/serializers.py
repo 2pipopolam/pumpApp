@@ -4,6 +4,14 @@ from rest_framework import serializers
 from .models import Post, Profile, PostImage, PostVideo, TrainingSession
 
 
+from dj_rest_auth.registration.serializers import SocialLoginSerializer
+from allauth.socialaccount.helpers import complete_social_login
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.models import SocialLogin, SocialToken, SocialApp
+from django.conf import settings
+import traceback
+
+
 #Login
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -178,3 +186,54 @@ class PostSerializer(serializers.ModelSerializer):
             PostVideo.objects.create(post=instance, video_url=video_url)
 
         return instance
+
+
+
+
+
+class GoogleLoginSerializer(serializers.Serializer):
+    id_token = serializers.CharField(required=True, allow_blank=False)
+
+    def validate(self, attrs):
+        request = self.context['request']
+        id_token = attrs.get('id_token')
+
+        # Prepare the adapter and app
+        adapter = GoogleOAuth2Adapter(request)
+        try:
+            app = SocialApp.objects.get(provider=adapter.provider_id)
+        except SocialApp.DoesNotExist:
+            raise serializers.ValidationError('SocialApp for Google provider is not configured.')
+
+        # Create a SocialToken with the id_token
+        token = SocialToken(app=app, token=id_token)
+
+        # Try to complete the login process
+        try:
+            # Pass 'request', 'app', 'token', and 'response' to 'complete_login'
+            login = adapter.complete_login(request, app, token, response={'id_token': id_token})
+            login.token = token
+            login.state = SocialLogin.state_from_request(request)
+
+            # Complete the social login
+            complete_social_login(request, login)
+
+            # Ensure the user is saved
+            if not login.user.pk:
+                login.user.save()
+
+            # Save the social account if not already saved
+            if not login.is_existing:
+                login.save(request, connect=True)
+
+        except Exception as e:
+            # Include detailed error information
+            import traceback
+            traceback_str = ''.join(traceback.format_tb(e.__traceback__))
+            raise serializers.ValidationError({
+                'detail': f'Failed to login with Google: {str(e)}',
+                'traceback': traceback_str
+            })
+
+        attrs['user'] = login.user
+        return attrs

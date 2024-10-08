@@ -1,0 +1,42 @@
+frontend
+ 󰉋 public
+   src
+     components
+       DarkModeToggle.tsx
+       DeleteDialog.tsx
+       EditPostDialog.tsx
+       EditProfilePictureDialog.tsx
+       GoogleAuth.tsx
+        GoogleLoginButton.tsx
+       PostItem.tsx
+       PostList.tsx
+       PrivateRoute.tsx
+       SearchBar.tsx
+       TrainingCalendar.tsx
+       TrainingSessionDialog.tsx
+       UserAvatar.tsx
+   󰉋 contexts
+   󰉋  pages
+   󰉋 services
+     App.css
+     App.test.tsx
+     App.tsx
+     config.ts
+     GoogleRedirectHandler.tsx
+     index.css
+     index.tsx
+    󰜡 logo.svg
+     react-app-env.d.ts
+     reportWebVitals.ts
+     setupTests.ts
+     types.tsx
+   ◌ .env
+   .gitignore
+   \
+   ]
+   package-lock.json
+   package.json
+   postcss.config.js
+   README.md
+  󱏿 tailwind.config.js
+   tsconfig.json

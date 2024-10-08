@@ -62,7 +62,7 @@ urlpatterns = [
         include('social_django.urls', namespace='social')
     ),
 
-    path('', views.index, name='index'),
+    #path('', views.index, name='index'),
 ]
 
 if settings.DEBUG:
