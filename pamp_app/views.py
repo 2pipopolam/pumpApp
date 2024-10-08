@@ -36,7 +36,10 @@ class GoogleLogin(SocialLoginView):
     client_class = OAuth2Client
     serializer_class = GoogleLoginSerializer
 
-
+    def get_response(self):
+        response = super().get_response()
+        #         
+        return response
 
 
 @csrf_exempt
@@ -94,7 +97,9 @@ class PostViewSet(viewsets.ModelViewSet):
                 print(f"Video URL: {video.video_url}")
             else:
                 print("No video file or URL provided.")
-
+ 
+    def get_queryset(self):
+        return Post.objects.filter(profile__user=self.request.user)
 
 
 

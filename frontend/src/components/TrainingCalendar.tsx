@@ -16,7 +16,7 @@ interface CalendarEvent {
 }
 
 interface TrainingCalendarProps {
-  isDarkMode: boolean;
+  isDarkMode?: boolean;
 }
 
 const localizer = momentLocalizer(moment);

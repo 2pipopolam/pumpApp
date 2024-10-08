@@ -46,34 +46,41 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  // Обработка успешной аутентификации через Google
-  const handleGoogleSuccess = async (credentialResponse: any) => {
-    try {
-        
-        console.log('Received id_token:', credentialResponse.credential);
-        
-        const response = await axios.post('http://localhost:8000/auth/google/login/', {
-          id_token: credentialResponse.credential,
-        });
-      // const response = await axios.post(`${API_URL}social-auth/login/google-oauth2/`, {
-      //   access_token: credentialResponse.credential,
-      // });
-      // Сохранение токенов в localStorage
-      localStorage.setItem('accessToken', response.data.access);
-      localStorage.setItem('refreshToken', response.data.refresh);
-      
-      // Сохранение данных пользователя
-      loginContext(response.data.access, response.data.refresh, response.data.user);
-      navigate('/');
-    } catch (err) {
-      console.error('Error:' ,err.response);
-      setError(err.response?.data?.detail || 'Произошла ошибка при аутентификации через Google.');
-    }
-  };
+
+const handleGoogleSuccess = async (credentialResponse: any) => {
+  try {
+    const response = await axios.post('http://localhost:8000/auth/google/login/', {
+      id_token: credentialResponse.credential,
+    });
+
+    console.log('Google login response:', response.data);
+
+    // Adjust to match the keys returned by your backend
+    const { access_token, refresh_token, user } = response.data;
+
+    // Save tokens to localStorage
+    localStorage.setItem('accessToken', access_token);
+    localStorage.setItem('refreshToken', refresh_token);
+
+    // Save user data
+    loginContext(access_token, refresh_token, user);
+
+    navigate('/');
+  } catch (err) {
+    setError(err.response?.data?.detail || 'An error occurred during Google authentication.');
+    console.error(err);
+  }
+};
 
   const handleGoogleFailure = () => {
     setError('Не удалось войти через Google.');
   };
+
+
+
+
+
+
 
   return (
     <div className="login-page">

@@ -37,6 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(userData);
     localStorage.setItem('accessToken', access);
     localStorage.setItem('refreshToken', refresh);
+    localStorage.setItem('user', JSON.stringify(userData));
   };
 
   const logout = () => {
@@ -45,29 +46,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
   };
 
-  // Инициализация состояния из localStorage при загрузке приложения
+  // Initialize state from localStorage on app load
   useEffect(() => {
     const storedAccessToken = localStorage.getItem('accessToken');
     const storedRefreshToken = localStorage.getItem('refreshToken');
+    const storedUser = localStorage.getItem('user');
 
-    if (storedAccessToken && storedRefreshToken) {
+    if (storedAccessToken && storedRefreshToken && storedUser) {
       setAccessToken(storedAccessToken);
       setRefreshTokenState(storedRefreshToken);
-      // Получение данных пользователя
-      api.get('/user-profile/')
-        .then((response) => {
-          setUser(response.data.user);
-        })
-        .catch((err) => {
-          console.error('Ошибка при получении профиля пользователя:', err);
-          logout();
-        });
+      setUser(JSON.parse(storedUser));
     }
   }, []);
 
-  // Обновление токенов при истечении access токена
+  // Refresh the access token periodically
   useEffect(() => {
     const interval = setInterval(async () => {
       if (refreshTokenState) {
@@ -81,7 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           logout();
         }
       }
-    }, 15 * 60 * 1000); // Обновление каждые 15 минут
+    }, 15 * 60 * 1000); // Refresh every 15 minutes
 
     return () => clearInterval(interval);
   }, [refreshTokenState]);
@@ -92,6 +87,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     </AuthContext.Provider>
   );
 };
+
+
 
 
 

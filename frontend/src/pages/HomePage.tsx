@@ -22,9 +22,8 @@ import DeleteDialog from '../components/DeleteDialog';
 import EditPostDialog from '../components/EditPostDialog';
 import EditProfilePictureDialog from '../components/EditProfilePictureDialog';
 import { AuthContext } from '../contexts/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AxiosResponse } from 'axios';
-import GoogleLoginButton from '../components/GoogleLoginButton'; // Импортируем компонент
 
 const HomePage: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -45,7 +44,8 @@ const HomePage: React.FC = () => {
   });
   const [isEditingProfilePicture, setIsEditingProfilePicture] = useState(false);
 
-  const { logout, user } = useContext(AuthContext); // Используем контекст аутентификации
+  const { logout, user } = useContext(AuthContext); // Use AuthContext
+  const navigate = useNavigate();
 
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
@@ -85,11 +85,13 @@ const HomePage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (user) { // Проверяем, аутентифицирован ли пользователь
+    if (user) {
       fetchPosts();
       fetchUserProfile();
+    } else {
+      navigate('/login'); // Redirect to login if not authenticated
     }
-  }, [fetchPosts, fetchUserProfile, user]);
+  }, [fetchPosts, fetchUserProfile, user, navigate]);
 
   const handleDeletePost = async (id: number) => {
     try {
@@ -346,7 +348,7 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="flex">
-      {/* Навигационная панель */}
+      {/* Navigation Panel */}
       <nav className="w-64 p-4 bg-gray-200 dark:bg-gray-800 fixed top-0 left-0 h-full flex flex-col">
         <Link to="/" className="mb-4 text-xl font-bold text-gray-800 dark:text-white">
           Главная
@@ -367,7 +369,7 @@ const HomePage: React.FC = () => {
         )}
       </nav>
 
-      {/* Основной контент */}
+      {/* Main Content */}
       <div className="ml-64 p-4 flex-grow">
         {user ? (
           <>
@@ -392,7 +394,7 @@ const HomePage: React.FC = () => {
               />
             )}
 
-            {/* Диалог удаления поста */}
+            {/* Delete Post Dialog */}
             {showDeleteDialog && (
               <DeleteDialog
                 isDarkMode={isDarkMode}
@@ -401,7 +403,7 @@ const HomePage: React.FC = () => {
               />
             )}
 
-            {/* Диалог редактирования/создания поста */}
+            {/* Edit/Create Post Dialog */}
             {(isEditing || isCreating) && editingPost && (
               <EditPostDialog
                 isDarkMode={isDarkMode}
@@ -422,7 +424,7 @@ const HomePage: React.FC = () => {
               />
             )}
 
-            {/* Диалог редактирования аватара */}
+            {/* Edit Profile Picture Dialog */}
             {isEditingProfilePicture && (
               <EditProfilePictureDialog
                 isDarkMode={isDarkMode}
@@ -436,7 +438,11 @@ const HomePage: React.FC = () => {
           <div className="flex flex-col items-center justify-center h-full">
             <h2 className="text-2xl mb-4 text-gray-800 dark:text-white">Добро пожаловать!</h2>
             <p className="mb-6 text-gray-600 dark:text-gray-300">Пожалуйста, войдите через Google, чтобы продолжить.</p>
-            <GoogleLoginButton />
+            <Link to="/login">
+              <button className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                Войти
+              </button>
+            </Link>
           </div>
         )}
       </div>
