@@ -8,8 +8,6 @@ class Profile(models.Model):
         on_delete=models.CASCADE
     )
     
-    #username = models.TextField(blank = False)
-    
     avatar = models.ImageField(
         null=True,
         blank=True,
@@ -57,33 +55,3 @@ class TrainingSession(models.Model):
 
     def __str__(self):
         return f'{self.profile.user.username} - {self.date} at {self.time}'
-
-
-
-
-
-# class File(models.Model):
-#     file = models.FileField(upload_to='uploads/')
-#     uploaded_at = models.DateTimeField(auto_now_add=True)
-
-
-    # photo = models.ImageField(
-    #     blank=True,
-    #     upload_to='posts/%Y/%m/%d/',
-    # )
-
-
-# class UserTraining(models.Model):
-#     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-#     date = models.DateField()
-#     time = models.TimeField()
-#     duration = models.DurationField()
-#     description = models.TextField(blank=True)
-#     training_type = models.TextField(blank = False)
-
-
-#     class Meta:
-#         ordering = ['date', 'time']
-
-#     def __str__(self):
-#         return f'Тренировка {self.user.username} - {self.date} {self.time}'

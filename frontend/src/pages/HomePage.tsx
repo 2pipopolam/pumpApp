@@ -348,7 +348,6 @@ const HomePage: React.FC = () => {
 
     try {
       await updateProfile(formData);
-      // Fetch the updated user profile to refresh the userData state
       await fetchUserProfile();
       setIsEditingProfilePicture(false);
     } catch (err) {

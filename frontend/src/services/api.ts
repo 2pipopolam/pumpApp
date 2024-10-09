@@ -7,7 +7,7 @@ export const api = axios.create({
   baseURL: API_URL,
 });
 
-// Добавляем перехватчик запросов для добавления токенов
+// Перехватчик запросов для добавления токенов
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken');
@@ -38,7 +38,6 @@ export const refreshToken = (refresh: string) => api.post('/token/refresh/', { r
 
 
 //TrainingSession
-
 export const getTrainingSessions = (): Promise<AxiosResponse<TrainingSession[]>> =>
   api.get(`/training-sessions/`);
 

@@ -3,13 +3,12 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from .models import Post, Profile, PostImage, PostVideo, TrainingSession
 
-
-from dj_rest_auth.registration.serializers import SocialLoginSerializer
 from allauth.socialaccount.helpers import complete_social_login
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.models import SocialLogin, SocialToken, SocialApp
-from django.conf import settings
-import traceback
+#from django.conf import settings
+#from dj_rest_auth.registration.serializers import SocialLoginSerializer
+#import traceback
 
 
 #Login
@@ -130,19 +129,16 @@ class PostSerializer(serializers.ModelSerializer):
         profile = self.context['request'].user.profile
         post = Post.objects.create(profile=profile, **validated_data)
 
-        # Обработка файлов изображений
+
         for image_data in images_data:
             PostImage.objects.create(post=post, image=image_data)
 
-        # Обработка URL изображений
         for image_url in images_url_data:
             PostImage.objects.create(post=post, image_url=image_url)
 
-        # Обработка файлов видео
         for video_data in videos_data:
             PostVideo.objects.create(post=post, video=video_data)
 
-        # Обработка URL видео
         for video_url in videos_url_data:
             PostVideo.objects.create(post=post, video_url=video_url)
 
@@ -163,7 +159,6 @@ class PostSerializer(serializers.ModelSerializer):
         instance.description = validated_data.get('description', instance.description)
         instance.save()
 
-        # Обновление изображений
         if existing_image_ids:
             instance.images.exclude(id__in=existing_image_ids).delete()
         else:
@@ -175,7 +170,6 @@ class PostSerializer(serializers.ModelSerializer):
         for image_url in images_url_data:
             PostImage.objects.create(post=instance, image_url=image_url)
 
-        # Обновление видео
         if existing_video_ids:
             instance.videos.exclude(id__in=existing_video_ids).delete()
         else:
@@ -199,37 +193,29 @@ class GoogleLoginSerializer(serializers.Serializer):
     def validate(self, attrs):
         request = self.context['request']
         id_token = attrs.get('id_token')
-
-        # Prepare the adapter and app
         adapter = GoogleOAuth2Adapter(request)
+ 
         try:
             app = SocialApp.objects.get(provider=adapter.provider_id)
         except SocialApp.DoesNotExist:
             raise serializers.ValidationError('SocialApp for Google provider is not configured.')
 
-        # Create a SocialToken with the id_token
         token = SocialToken(app=app, token=id_token)
 
-        # Try to complete the login process
         try:
-            # Pass 'request', 'app', 'token', and 'response' to 'complete_login'
             login = adapter.complete_login(request, app, token, response={'id_token': id_token})
             login.token = token
             login.state = SocialLogin.state_from_request(request)
 
-            # Complete the social login
             complete_social_login(request, login)
 
-            # Ensure the user is saved
             if not login.user.pk:
                 login.user.save()
 
-            # Save the social account if not already saved
             if not login.is_existing:
                 login.save(request, connect=True)
 
         except Exception as e:
-            # Include detailed error information
             import traceback
             traceback_str = ''.join(traceback.format_tb(e.__traceback__))
             raise serializers.ValidationError({

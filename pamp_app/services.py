@@ -12,7 +12,7 @@ GOOGLE_ACCESS_TOKEN_OBTAIN_URL = 'https://oauth2.googleapis.com/token'
 GOOGLE_USER_INFO_URL = 'https://www.googleapis.com/oauth2/v3/userinfo'
 LOGIN_URL = f'{settings.BASE_APP_URL}/internal/login'
 
-# Exchange authorization code with access token
+
 def google_get_access_token(code: str, redirect_uri: str) -> str:
     data = {
         'code': code,
@@ -45,7 +45,7 @@ def google_get_user_info(access_token: str) -> Dict[str, Any]:
     
     return response.json()
 
-# Process and get/create user data
+
 def get_user_data(validated_data):
     domain = settings.BASE_API_URL
     redirect_uri = f'{domain}/auth/api/login/google/'
@@ -60,7 +60,6 @@ def get_user_data(validated_data):
     access_token = google_get_access_token(code=code, redirect_uri=redirect_uri)
     user_data = google_get_user_info(access_token=access_token)
 
-    # Creates user in DB if first time login
     user, created = User.objects.get_or_create(
         email=user_data['email'],
         defaults={
@@ -71,14 +70,12 @@ def get_user_data(validated_data):
     )
     
     if not created:
-        # Optionally update user data
         user.first_name = user_data.get('given_name', user.first_name)
         user.last_name = user_data.get('family_name', user.last_name)
         user.save()
     
-    # Create or update Profile
+ 
     profile, profile_created = Profile.objects.get_or_create(user=user)
-    # Optionally update profile data here if needed
 
     profile_data = {
         'email': user_data['email'],

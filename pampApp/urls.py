@@ -35,7 +35,7 @@ from rest_framework_simplejwt.views import (
 
 router = DefaultRouter()
 router.register(r'profiles', views.ProfileViewSet, basename='profile')
-router.register(r'posts', views.PostViewSet)  # If PostViewSet has a queryset, no need to specify basename
+router.register(r'posts', views.PostViewSet) 
 router.register(r'training-sessions', views.TrainingSessionViewSet, basename='training-session')
 
 urlpatterns = [

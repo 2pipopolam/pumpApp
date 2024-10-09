@@ -9,7 +9,6 @@ const GoogleAuth: React.FC = () => {
         access_token: credentialResponse.credential,
       });
       console.log(response.data);
-      // Здесь вы можете сохранить токен в localStorage или в состоянии приложения
     } catch (error) {
       console.error('Error during Google authentication', error);
     }

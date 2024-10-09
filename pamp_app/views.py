@@ -10,6 +10,11 @@ from rest_framework.permissions import AllowAny
 #from rest_framework.parsers import MultiPartParser, FormParser
 from .models import Profile, Post,TrainingSession
 
+# from rest_framework import status
+# from rest_framework.views import APIView
+# from rest_framework.permissions import IsAuthenticated
+
+
 
 from .serializers import (
     ProfileSerializer,
@@ -38,7 +43,6 @@ class GoogleLogin(SocialLoginView):
 
     def get_response(self):
         response = super().get_response()
-        #         
         return response
 
 
@@ -46,10 +50,6 @@ class GoogleLogin(SocialLoginView):
 def google_callback(request):
     return JsonResponse({'message': 'Authentication successful'})
 
-
-# from rest_framework import status
-# from rest_framework.views import APIView
-# from rest_framework.permissions import IsAuthenticated
 
 
 class ProfileViewSet(viewsets.ModelViewSet):
@@ -174,11 +174,6 @@ def user_profile(request):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
-
 
 
 

@@ -18,15 +18,15 @@ export interface Profile {
 
 export interface MediaItem {
   id: number | null;
-  image?: string; // URL изображения (для загруженных файлов)
-  video?: string; // URL видео (для загруженных файлов)
-  image_url?: string; // URL изображения по ссылке
-  video_url?: string; // URL видео по ссылке
+  image?: string;   
+  video?: string; 
+  image_url?: string; 
+  video_url?: string; 
 }
 
 export interface ExtendedMediaItem extends MediaItem {
   file?: File; // Файл для загрузки (изображение или видео)
-  isNew?: boolean; // Флаг, указывающий, что медиа является новым
+  isNew?: boolean; 
 }
 
 
@@ -53,15 +53,6 @@ export interface TrainingSession {
   id: number;
   date: string; // ISO format date
   time: string; // ISO format time
-  recurrence: string; // 'once' or 'weekly'
-  days_of_week?: string; // Comma-separated days, e.g., 'Monday,Thursday'
+  recurrence: string;   
+  days_of_week?: string; 
 }
-
-
-
-/*
-export interface PostData extends Omit<Post, 'training_type' | 'photo' | 'video'> {
-  type: string;
-  media: MediaItem[];
-}
-*/ 
