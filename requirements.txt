@@ -32,3 +32,6 @@ APScheduler
 pytz
 python-dotenv
 httpx
+djangorestframework-api-key
+
+logging

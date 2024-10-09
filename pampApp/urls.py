@@ -22,13 +22,18 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
 from pamp_app import views
-
 from pamp_app.views import GoogleLogin
+
+
+from pamp_app.views import LinkTelegramView, LinkTelegramStatusView, LinkTelegramConfirmView,UserTrainingSessionsView ,TrainingSessionViewSet
 
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+
+
+
 
 #from pamp_app.views import FileUploadView
 
@@ -62,6 +67,12 @@ urlpatterns = [
         include('social_django.urls', namespace='social')
     ),
 
+    #Telegram things
+    path('api/link-telegram/', LinkTelegramView.as_view(), name='link-telegram'),
+    path('api/link-telegram/status/', LinkTelegramStatusView.as_view(), name='link-telegram-status'),
+    path('api/link-telegram/confirm/', LinkTelegramConfirmView.as_view(), name='link-telegram-confirm'),
+    #path('api/training-sessions/', UserTrainingSessionsView.as_view(), name='training-sessions'),
+    path('api/user-training-sessions/', UserTrainingSessionsView.as_view(), name='user-training-sessions'),
     #path('', views.index, name='index'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

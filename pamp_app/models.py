@@ -1,5 +1,9 @@
 from django.db import models
 from django.conf import settings
+from django.contrib.auth.models import User
+import uuid
+from django.utils import timezone
+from datetime import timedelta
 
 
 class Profile(models.Model):
@@ -55,3 +59,14 @@ class TrainingSession(models.Model):
 
     def __str__(self):
         return f'{self.profile.user.username} - {self.date} at {self.time}'
+
+
+
+class TelegramLink(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    telegram_user_id = models.CharField(max_length=50, null=True, blank=True)
+    linking_code = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_expired(self):
+        return timezone.now() > self.created_at + timedelta(minutes=15)

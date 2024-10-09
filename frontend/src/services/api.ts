@@ -5,6 +5,7 @@ export const API_URL =  'http://localhost:8000/api/';
 
 export const api = axios.create({
   baseURL: API_URL,
+  withCredentials: true,//куки
 });
 
 // Перехватчик запросов для добавления токенов
@@ -52,3 +53,18 @@ export const updateTrainingSession = (
 
 export const deleteTrainingSession = (id: number): Promise<AxiosResponse<void>> =>
   api.delete(`/training-sessions/${id}/`);
+
+
+// Функция для генерации кода связывания с Telegram
+export const linkTelegram = () => {
+  return api.post('/link-telegram/');
+};
+
+// Функция для проверки статуса связывания (опционально)
+export const checkTelegramLink = () => {
+  return api.get('/link-telegram/status/');
+};
+
+export const confirmLinkTelegram = (code: string, telegramUserId: string) => {
+  return api.post('/link-telegram/confirm/', { code, telegram_user_id: telegramUserId });
+};

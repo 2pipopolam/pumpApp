@@ -96,16 +96,22 @@ class PostVideoSerializer(serializers.ModelSerializer):
 
 
 
+# class TrainingSessionSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = TrainingSession
+#         fields = ['id', 'date', 'time', 'recurrence', 'days_of_week']
+
+#     def create(self, validated_data):
+#         profile = self.context['request'].user.profile
+#         return TrainingSession.objects.create(profile=profile, **validated_data)
 
 
 class TrainingSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrainingSession
-        fields = ['id', 'date', 'time', 'recurrence', 'days_of_week']
+        fields = ['id', 'date', 'time', 'recurrence', 'days_of_week', 'profile']
+        read_only_fields = ('profile',)
 
-    def create(self, validated_data):
-        profile = self.context['request'].user.profile
-        return TrainingSession.objects.create(profile=profile, **validated_data)
 
 
 
