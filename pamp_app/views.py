@@ -17,6 +17,9 @@ from django.contrib.auth.models import User
 
 
 
+
+
+
 #from datetime import timedelta
 #import os
 #from django.urls import path
@@ -300,30 +303,8 @@ class LinkTelegramConfirmView(APIView):
 
 
 
-# class UserTrainingSessionsView(APIView):
-#     permission_classes = [HasAPIKey]
-
-#     def get(self, request):
-#         user_id = request.query_params.get('id')  # Ожидаем параметр 'id'
-
-#         if not user_id:
-#             return Response({"detail": "id обязателен."}, status=status.HTTP_400_BAD_REQUEST)
-
-#         try:
-#             user = User.objects.get(id=user_id)
-#         except User.DoesNotExist:
-#             return Response({"detail": "Пользователь не найден."}, status=status.HTTP_404_NOT_FOUND)
-
-#         now = timezone.now().date()
-#         sessions = TrainingSession.objects.filter(profile__user=user, date__gte=now).order_by('date')
-
-#         serializer = TrainingSessionSerializer(sessions, many=True)
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-
 class UserTrainingSessionsView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [HasAPIKey]
 
     def get(self, request):
         user_id = request.query_params.get('id')
@@ -341,8 +322,6 @@ class UserTrainingSessionsView(APIView):
 
         serializer = TrainingSessionSerializer(sessions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
 
 
 

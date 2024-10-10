@@ -5,6 +5,12 @@ import logging
 import requests
 import uuid
 from telegram import Update
+from apscheduler.schedulers.background import BackgroundScheduler
+from datetime import datetime
+import pytz
+from dotenv import load_dotenv
+import json
+
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -12,11 +18,6 @@ from telegram.ext import (
     MessageHandler,
     filters
 )
-from apscheduler.schedulers.background import BackgroundScheduler
-from datetime import datetime
-import pytz
-from dotenv import load_dotenv
-import json
 
 # Загрузка переменных окружения из .env файла
 load_dotenv()
