@@ -14,8 +14,8 @@ import {
   deletePost,
   getProfile,
   updateProfile,
-  linkTelegram, // Функция API для генерации кода связывания
-  checkTelegramLink, // Функция API для проверки статуса связывания
+  linkTelegram,
+  checkTelegramLink,
 } from '../services/api';
 import DarkModeToggle from '../components/DarkModeToggle';
 import SearchBar from '../components/SearchBar';
@@ -23,15 +23,18 @@ import PostList from '../components/PostList';
 import DeleteDialog from '../components/DeleteDialog';
 import EditPostDialog from '../components/EditPostDialog';
 import EditProfilePictureDialog from '../components/EditProfilePictureDialog';
-import Modal from '../components/Modal'; // Компонент модального окна
+import Modal from '../components/Modal';
 import { AuthContext } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { AxiosResponse } from 'axios';
 
+// Import the QRCode component from react-qr-code
+import QRCode from 'react-qr-code';
+
 const BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
 
 const HomePage: React.FC = () => {
-  // Существующие состояния
+  // Existing state variables
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [posts, setPosts] = useState<ExtendedPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,7 +53,7 @@ const HomePage: React.FC = () => {
   });
   const [isEditingProfilePicture, setIsEditingProfilePicture] = useState(false);
 
-  // Новые состояния для связывания Telegram
+  // New state variables for Telegram linking
   const [isLinkingTelegram, setIsLinkingTelegram] = useState(false);
   const [linkingCode, setLinkingCode] = useState<string | null>(null);
   const [linkingError, setLinkingError] = useState<string | null>(null);
@@ -61,14 +64,13 @@ const HomePage: React.FC = () => {
 
   const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
-  // Функция для проверки статуса связывания Telegram при загрузке
+  // Fetch Telegram link status on load
   const fetchTelegramLinkStatus = useCallback(async () => {
     try {
       const response = await checkTelegramLink();
       setIsLinked(response.data.linked);
     } catch (err) {
-      console.error('Ошибка при проверке статуса связывания Telegram:', err);
-      // Можно установить состояние ошибки, если необходимо
+      console.error('Error checking Telegram link status:', err);
     }
   }, []);
 
@@ -76,7 +78,6 @@ const HomePage: React.FC = () => {
     try {
       const response = await getProfile();
       const avatarPath = response.data.avatar || '';
-      // Добавляем временную метку для предотвращения кэширования
       const avatarUrl = avatarPath ? `${BASE_URL}${avatarPath}?t=${Date.now()}` : '';
 
       setUserData({
@@ -86,8 +87,8 @@ const HomePage: React.FC = () => {
         profilePicture: avatarUrl,
       });
     } catch (err) {
-      console.error('Ошибка при получении профиля пользователя:', err);
-      setError('Не удалось получить профиль пользователя.');
+      console.error('Error fetching user profile:', err);
+      setError('Failed to fetch user profile.');
     }
   }, []);
 
@@ -104,8 +105,8 @@ const HomePage: React.FC = () => {
         }))
       );
     } catch (err) {
-      setError('Не удалось загрузить посты. Пожалуйста, попробуйте позже.');
-      console.error('Ошибка при загрузке постов:', err);
+      setError('Failed to load posts. Please try again later.');
+      console.error('Error loading posts:', err);
     } finally {
       setIsLoading(false);
     }
@@ -128,8 +129,8 @@ const HomePage: React.FC = () => {
       setShowDeleteDialog(false);
       setPostToDelete(null);
     } catch (err) {
-      setError('Не удалось удалить пост. Пожалуйста, попробуйте снова.');
-      console.error('Ошибка при удалении поста:', err);
+      setError('Failed to delete post. Please try again.');
+      console.error('Error deleting post:', err);
     }
   };
 
@@ -178,7 +179,7 @@ const HomePage: React.FC = () => {
       existingImageIds.forEach((id) => formData.append('existing_images', id.toString()));
       existingVideoIds.forEach((id) => formData.append('existing_videos', id.toString()));
 
-      // Добавляем новые изображения
+      // Add new images
       editingPost.images.forEach((image) => {
         if (image.file) {
           formData.append('images', image.file);
@@ -187,7 +188,7 @@ const HomePage: React.FC = () => {
         }
       });
 
-      // Добавляем новые видео
+      // Add new videos
       editingPost.videos.forEach((video) => {
         if (video.file) {
           formData.append('videos', video.file);
@@ -238,8 +239,8 @@ const HomePage: React.FC = () => {
         }
         setEditingPost(null);
       } catch (err) {
-        setError('Не удалось сохранить пост. Пожалуйста, попробуйте снова.');
-        console.error('Ошибка при сохранении поста:', err);
+        setError('Failed to save post. Please try again.');
+        console.error('Error saving post:', err);
       }
     }
   };
@@ -373,25 +374,25 @@ const HomePage: React.FC = () => {
       await fetchUserProfile();
       setIsEditingProfilePicture(false);
     } catch (err) {
-      setError('Не удалось обновить аватар. Пожалуйста, попробуйте снова.');
-      console.error('Ошибка при обновлении аватара:', err);
+      setError('Failed to update avatar. Please try again.');
+      console.error('Error updating avatar:', err);
     }
   };
 
-  // Новая функция для генерации кода связывания с Telegram
+  // New function to generate the Telegram linking code
   const handleLinkTelegram = async () => {
     try {
-      const response = await linkTelegram(); // Вызов функции API для генерации кода
-      setLinkingCode(response.data.code); // Предполагается, что API возвращает { code: "ABC123" }
+      const response = await linkTelegram(); // API call to generate the code
+      setLinkingCode(response.data.code); // Assuming the API returns { code: "ABC123" }
       setIsLinkingTelegram(true);
       setLinkingError(null);
     } catch (error) {
-      console.error('Ошибка при генерации кода для связывания с Telegram:', error);
-      setLinkingError('Не удалось сгенерировать код. Пожалуйста, попробуйте позже.');
+      console.error('Error generating Telegram linking code:', error);
+      setLinkingError('Failed to generate code. Please try again later.');
     }
   };
 
-  // Класс для кнопок
+  // Class for buttons
   const buttonClass =
     'w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-xl text-gray-600 hover:bg-gray-400 transition-colors duration-300';
 
@@ -400,37 +401,37 @@ const HomePage: React.FC = () => {
       {/* Navigation Panel */}
       <nav className="w-64 p-4 bg-gray-200 dark:bg-gray-800 fixed top-0 left-0 h-full flex flex-col">
         <Link to="/" className="mb-4 text-xl font-bold text-gray-800 dark:text-white">
-          Главная
+          Home
         </Link>
         <Link to="/calendar" className="mb-4 text-gray-800 dark:text-white">
-          Календарь тренировок
+          Training Calendar
         </Link>
 
-        {/* Кнопка "Связать с Telegram" */}
+        {/* "Link with Telegram" Button */}
         {!isLinked && user && (
           <button
             onClick={handleLinkTelegram}
             className="mb-4 p-2 bg-green-500 text-white rounded hover:bg-green-600"
           >
-            Связать с Telegram
+            Link with Telegram
           </button>
         )}
 
-        {/* Индикация связанного Telegram */}
+        {/* Indication of linked Telegram */}
         {isLinked && (
           <div className="mb-4 p-2 bg-blue-500 text-white rounded">
-            Telegram связан
+            Telegram Linked
           </div>
         )}
 
         {user ? (
           <button onClick={logout} className="mt-auto p-2 bg-red-500 text-white rounded">
-            Выйти
+            Logout
           </button>
         ) : (
           <Link to="/login" className="mt-auto">
             <button className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-              Войти
+              Login
             </button>
           </Link>
         )}
@@ -446,7 +447,7 @@ const HomePage: React.FC = () => {
                 {userData.profilePicture ? (
                   <img
                     src={userData.profilePicture}
-                    alt="Аватар пользователя"
+                    alt="User Avatar"
                     className="w-36 h-36 rounded-full mr-8 cursor-pointer"
                     onClick={() => setIsEditingProfilePicture(true)}
                     style={{ cursor: 'pointer' }}
@@ -459,7 +460,7 @@ const HomePage: React.FC = () => {
                     className="w-36 h-36 rounded-full bg-gray-300 flex items-center justify-center cursor-pointer mr-8"
                     onClick={() => setIsEditingProfilePicture(true)}
                   >
-                    <span className="text-gray-700">Аватар</span>
+                    <span className="text-gray-700">Avatar</span>
                   </div>
                 )}
                 <h2 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
@@ -467,7 +468,7 @@ const HomePage: React.FC = () => {
                 </h2>
                 <button
                   className={`absolute top-2 right-2 ${buttonClass}`}
-                  aria-label="Добавить новый пост"
+                  aria-label="Add new post"
                   onClick={handleAddNewPost}
                 >
                   +
@@ -482,7 +483,7 @@ const HomePage: React.FC = () => {
                 isDarkMode={isDarkMode}
               />
               {isLoading ? (
-                <p>Загрузка постов...</p>
+                <p>Loading posts...</p>
               ) : error ? (
                 <p className="text-red-500">{error}</p>
               ) : (
@@ -541,38 +542,42 @@ const HomePage: React.FC = () => {
           </>
         ) : (
           <div className="flex flex-col items-center justify-center h-full">
-            <h2 className="text-2xl mb-4 text-gray-800 dark:text-white">Добро пожаловать!</h2>
+            <h2 className="text-2xl mb-4 text-gray-800 dark:text-white">Welcome!</h2>
             <p className="mb-6 text-gray-600 dark:text-gray-300">
-              Пожалуйста, войдите через Google, чтобы продолжить.
+              Please log in with Google to continue.
             </p>
             <Link to="/login">
               <button className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                Войти
+                Login
               </button>
             </Link>
           </div>
         )}
       </div>
 
-      {/* Модальное окно для связывания с Telegram */}
+      {/* Modal for linking with Telegram */}
       {isLinkingTelegram && linkingCode && (
         <Modal onClose={() => setIsLinkingTelegram(false)}>
-          <h2 className="text-2xl mb-4">Связать с Telegram</h2>
-          <p>Чтобы связать ваш аккаунт с Telegram, выполните следующие шаги:</p>
+          <h2 className="text-2xl mb-4">Link with Telegram</h2>
+          <p>To link your account with Telegram, follow these steps:</p>
           <ol className="list-decimal list-inside mt-2">
-            <li>Откройте Telegram и найдите нашего бота.</li>
-            <li>Отправьте боту следующий код:</li>
+            <li>Scan the QR code below with your phone.</li>
           </ol>
-          <div className="mt-2 p-2 bg-gray-100 border border-gray-300 rounded text-center text-xl font-mono">
-            {linkingCode}
+          <div className="mt-4 flex justify-center">
+            <QRCode
+              value={`https://t.me/reminder_training_bot?start=${linkingCode}`}
+              size={256}
+            />
           </div>
-          <p className="mt-4">После отправки кода, ваш аккаунт будет успешно связан.</p>
+          <p className="mt-4">
+            After scanning the QR code, your account will be linked automatically.
+          </p>
           {linkingError && <p className="text-red-500 mt-2">{linkingError}</p>}
           <button
             onClick={() => setIsLinkingTelegram(false)}
             className="mt-4 p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
-            Закрыть
+            Close
           </button>
         </Modal>
       )}
@@ -581,3 +586,4 @@ const HomePage: React.FC = () => {
 };
 
 export default HomePage;
+
