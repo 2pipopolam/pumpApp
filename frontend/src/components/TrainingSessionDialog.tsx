@@ -1,121 +1,151 @@
+// TrainingSessionDialog.tsx
 
-import React, { useState } from 'react';
-import { Modal, Button } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Modal, Button, Alert } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
-import { createTrainingSession } from '../services/api';
+import { createTrainingSession, updateTrainingSession, deleteTrainingSession } from '../services/api';
 import { TrainingSession } from '../types';
 import moment from 'moment';
 import 'react-datepicker/dist/react-datepicker.css';
 
+interface CalendarEvent {
+  id: number;
+  title: string;
+  start: Date;
+  end: Date;
+}
+
 interface TrainingSessionDialogProps {
   show: boolean;
   onHide: () => void;
-  initialDate: Date;
+  initialDate?: Date;
+  initialEvent?: CalendarEvent;
 }
 
-const daysOfWeekOptions = [
-  { value: 'Monday', label: 'Понедельник' },
-  { value: 'Tuesday', label: 'Вторник' },
-  { value: 'Wednesday', label: 'Среда' },
-  { value: 'Thursday', label: 'Четверг' },
-  { value: 'Friday', label: 'Пятница' },
-  { value: 'Saturday', label: 'Суббота' },
-  { value: 'Sunday', label: 'Воскресенье' },
-];
+const TrainingSessionDialog: React.FC<TrainingSessionDialogProps> = ({ show, onHide, initialDate, initialEvent }) => {
+  const [date, setDate] = useState<Date | null>(initialDate || new Date());
+  const [time, setTime] = useState<Date | null>(initialDate || new Date());
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
-const TrainingSessionDialog: React.FC<TrainingSessionDialogProps> = ({ show, onHide, initialDate }) => {
-  const [date, setDate] = useState<Date | null>(initialDate);
-  const [time, setTime] = useState<Date | null>(initialDate);
-  const [recurrence, setRecurrence] = useState<string>('once');
-  const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  useEffect(() => {
+    if (initialEvent) {
+      setIsEditing(true);
+      setDate(initialEvent.start);
+      setTime(initialEvent.start);
+    } else {
+      setIsEditing(false);
+    }
+    setErrorMessage('');
+  }, [initialEvent, show]);
 
   const handleSave = async () => {
     if (date && time) {
-      const dateStr = moment(date).format('YYYY-MM-DD');
-      const timeStr = moment(time).format('HH:mm:ss');
+      const selectedDateTime = moment(date).set({
+        hour: moment(time).hour(),
+        minute: moment(time).minute(),
+        second: 0,
+        millisecond: 0,
+      });
+
+      const now = moment();
+
+      if (selectedDateTime.isBefore(now)) {
+        setErrorMessage('Нельзя назначить тренировку на прошедшее время.');
+        return;
+      }
+
+      const dateStr = selectedDateTime.format('YYYY-MM-DD');
+      const timeStr = selectedDateTime.format('HH:mm:ss');
       const data: Partial<TrainingSession> = {
         date: dateStr,
         time: timeStr,
-        recurrence,
-        days_of_week: selectedDays.join(','),
       };
       try {
-        await createTrainingSession(data);
+        if (isEditing && initialEvent) {
+          await updateTrainingSession(initialEvent.id, data);
+        } else {
+          await createTrainingSession(data);
+        }
         onHide();
       } catch (error) {
-        console.error('Error creating training session:', error);
+        console.error('Ошибка при сохранении тренировки:', error);
+        setErrorMessage('Произошла ошибка при сохранении тренировки. Пожалуйста, попробуйте еще раз.');
       }
     }
+  };
+
+  const handleDelete = async () => {
+    if (initialEvent) {
+      try {
+        await deleteTrainingSession(initialEvent.id);
+        onHide();
+      } catch (error) {
+        console.error('Ошибка при удалении тренировки:', error);
+        setErrorMessage('Произошла ошибка при удалении тренировки. Пожалуйста, попробуйте еще раз.');
+      }
+    }
+  };
+
+  // Функция для фильтрации доступного времени
+  const filterPassedTime = (time: Date) => {
+    const now = moment();
+    const selectedDate = date ? moment(date).startOf('day') : moment().startOf('day');
+    const selectedTime = moment(time);
+
+    if (selectedDate.isSame(now, 'day')) {
+      return selectedTime.isAfter(now);
+    }
+    return true;
   };
 
   return (
     <Modal show={show} onHide={onHide}>
       <Modal.Header closeButton>
-        <Modal.Title>Создать тренировку</Modal.Title>
+        <Modal.Title>{isEditing ? 'Редактировать тренировку' : 'Создать тренировку'}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
+        {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
         <div className="mb-3">
           <label>Дата:</label>
           <DatePicker
             selected={date}
-            onChange={(date: Date | null) => setDate(date)}
+            onChange={(selectedDate: Date | null) => {
+              setDate(selectedDate);
+            }}
             dateFormat="yyyy-MM-dd"
             className="form-control"
+            minDate={new Date()}
+            placeholderText="Выберите дату"
           />
         </div>
         <div className="mb-3">
           <label>Время:</label>
           <DatePicker
             selected={time}
-            onChange={(time: Date | null) => setTime(time)}
+            onChange={(selectedTime: Date | null) => setTime(selectedTime)}
             showTimeSelect
             showTimeSelectOnly
             timeIntervals={15}
             timeCaption="Время"
             dateFormat="HH:mm"
             className="form-control"
+            filterTime={filterPassedTime}
+            placeholderText="Выберите время"
           />
         </div>
-        <div className="mb-3">
-          <label>Повторение:</label>
-          <select
-            value={recurrence}
-            onChange={(e) => setRecurrence(e.target.value)}
-            className="form-control"
-          >
-            <option value="once">Однократно</option>
-            <option value="weekly">Еженедельно</option>
-          </select>
-        </div>
-        {recurrence === 'weekly' && (
-          <div className="mb-3">
-            <label>Дни недели:</label>
-            {daysOfWeekOptions.map((day) => (
-              <div key={day.value}>
-                <input
-                  type="checkbox"
-                  value={day.value}
-                  checked={selectedDays.includes(day.value)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setSelectedDays([...selectedDays, day.value]);
-                    } else {
-                      setSelectedDays(selectedDays.filter((d) => d !== day.value));
-                    }
-                  }}
-                />
-                <label className="ml-2">{day.label}</label>
-              </div>
-            ))}
-          </div>
-        )}
       </Modal.Body>
       <Modal.Footer>
+        {isEditing && (
+          <Button variant="danger" onClick={handleDelete}>
+            Удалить
+          </Button>
+        )}
         <Button variant="secondary" onClick={onHide}>
           Отмена
         </Button>
         <Button variant="primary" onClick={handleSave}>
-          Сохранить
+          {isEditing ? 'Сохранить изменения' : 'Сохранить'}
         </Button>
       </Modal.Footer>
     </Modal>

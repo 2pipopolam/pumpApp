@@ -25,6 +25,7 @@ const TrainingCalendar: React.FC<TrainingCalendarProps> = ({ isDarkMode }) => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [showDialog, setShowDialog] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [refreshEvents, setRefreshEvents] = useState(false);
 
   useEffect(() => {
@@ -37,57 +38,35 @@ const TrainingCalendar: React.FC<TrainingCalendarProps> = ({ isDarkMode }) => {
       const sessions = response.data;
       let allEvents: CalendarEvent[] = [];
       sessions.forEach((session: TrainingSession) => {
-        if (session.recurrence === 'weekly' && session.days_of_week) {
-          const dayMapping: { [key: string]: number } = {
-            Monday: 1,
-            Tuesday: 2,
-            Wednesday: 3,
-            Thursday: 4,
-            Friday: 5,
-            Saturday: 6,
-            Sunday: 0,
-          };
-          const daysOfWeek = session.days_of_week.split(',').map((day: string) => dayMapping[day]);
-
-          // Generate events for the next 4 weeks
-          const startDate = moment(session.date);
-          const endDate = moment().add(4, 'weeks');
-          let current = startDate.clone();
-          while (current.isBefore(endDate)) {
-            if (daysOfWeek.includes(current.day())) {
-              const eventStart = moment(current.format('YYYY-MM-DD') + ' ' + session.time).toDate();
-              allEvents.push({
-                id: session.id,
-                title: 'Training Session',
-                start: eventStart,
-                end: moment(eventStart).add(1, 'hour').toDate(), // assuming 1-hour sessions
-              });
-            }
-            current.add(1, 'day');
-          }
-        } else {
-          const eventStart = moment(session.date + ' ' + session.time).toDate();
-          allEvents.push({
-            id: session.id,
-            title: 'Training Session',
-            start: eventStart,
-            end: moment(eventStart).add(1, 'hour').toDate(),
-          });
-        }
+        const eventStart = moment(session.date + ' ' + session.time).toDate();
+        allEvents.push({
+          id: session.id,
+          title: 'Тренировка',
+          start: eventStart,
+          end: moment(eventStart).add(1, 'hour').toDate(), // assuming 1-hour sessions
+        });
       });
       setEvents(allEvents);
     } catch (error) {
-      console.error('Error fetching training sessions:', error);
+      console.error('Ошибка при получении тренировок:', error);
     }
   };
 
   const handleSelectSlot = ({ start }: { start: Date }) => {
     setSelectedSlot({ start, end: start });
+    setSelectedEvent(null);
+    setShowDialog(true);
+  };
+
+  const handleSelectEvent = (event: CalendarEvent) => {
+    setSelectedEvent(event);
+    setSelectedSlot(null);
     setShowDialog(true);
   };
 
   const handleDialogClose = () => {
     setShowDialog(false);
+    setSelectedEvent(null);
     setRefreshEvents(!refreshEvents);
   };
 
@@ -98,6 +77,7 @@ const TrainingCalendar: React.FC<TrainingCalendarProps> = ({ isDarkMode }) => {
         events={events}
         selectable
         onSelectSlot={handleSelectSlot}
+        onSelectEvent={handleSelectEvent}
         startAccessor="start"
         endAccessor="end"
         style={{ height: 600 }}
@@ -105,15 +85,22 @@ const TrainingCalendar: React.FC<TrainingCalendarProps> = ({ isDarkMode }) => {
         eventPropGetter={(event) => ({
           style: {
             backgroundColor: isDarkMode ? '#1a202c' : '#3182ce',
-            color: isDarkMode ? 'white' : 'white',
+            color: 'white',
           },
         })}
       />
-      {showDialog && selectedSlot && (
+      {showDialog && selectedSlot && !selectedEvent && (
         <TrainingSessionDialog
           show={showDialog}
           onHide={handleDialogClose}
           initialDate={selectedSlot.start}
+        />
+      )}
+      {showDialog && selectedEvent && (
+        <TrainingSessionDialog
+          show={showDialog}
+          onHide={handleDialogClose}
+          initialEvent={selectedEvent}
         />
       )}
     </div>

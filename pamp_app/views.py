@@ -15,7 +15,8 @@ import logging
 from django.utils import timezone
 from django.contrib.auth.models import User
 
-
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 
 
 
@@ -174,8 +175,10 @@ class TrainingSessionViewSet(viewsets.ModelViewSet):
         serializer.save(profile=self.request.user.profile)
 
 
-
-
+#@method_decorator(csrf_exempt, name='dispatch')
+#@api_view(['POST'])
+#@action(detail=False, methods=['post'], url_path='register')
+#@csrf_exempt
 
 @api_view(['POST'])
 @permission_classes([AllowAny])

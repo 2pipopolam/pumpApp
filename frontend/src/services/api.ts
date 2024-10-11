@@ -60,7 +60,7 @@ export const linkTelegram = () => {
   return api.post('/link-telegram/');
 };
 
-// Функция для проверки статуса связывания (опционально)
+// Функция для проверки статуса связывания
 export const checkTelegramLink = () => {
   return api.get('/link-telegram/status/');
 };

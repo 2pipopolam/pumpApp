@@ -56,3 +56,11 @@ export interface TrainingSession {
   recurrence: string;   
   days_of_week?: string; 
 }
+
+
+export interface CalendarEvent {
+  id: number;
+  title: string;
+  start: Date;
+  end: Date;
+}

@@ -3,14 +3,16 @@
 import os
 import logging
 import requests
-import uuid
-from telegram import Update
+#import uuid
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
     ContextTypes,
     MessageHandler,
-    filters
+    CallbackQueryHandler,
+    filters,
+    CallbackContext,
 )
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta
@@ -73,21 +75,6 @@ def fetch_training_sessions(user_id):
     except requests.RequestException as e:
         logger.error(f"Error fetching training sessions for user_id {user_id}: {e}")
         return []
-
-def day_name_to_cron(day_name):
-    """
-    Converts day name to cron format.
-    """
-    days = {
-        'Monday': 'mon',
-        'Tuesday': 'tue',
-        'Wednesday': 'wed',
-        'Thursday': 'thu',
-        'Friday': 'fri',
-        'Saturday': 'sat',
-        'Sunday': 'sun',
-    }
-    return days.get(day_name.strip().capitalize(), 'mon')
 
 def get_user_id_from_chat_id(chat_id):
     """
@@ -163,7 +150,7 @@ def save_user_chat_id(chat_id, user_id):
                 logger.info(f"Updated chat_id: {chat_id} with new user_id: {user_id}")
             else:
                 logger.info(f"chat_id {chat_id} already exists with user_id {chat_ids[chat_id]}.")
-    
+
         try:
             with open(CHAT_IDS_FILE, 'w') as f:
                 json.dump(chat_ids, f, indent=4)
@@ -200,8 +187,6 @@ def schedule_reminders(app):
             session_id = session.get('id')
             date_str = session.get('date')
             time_str = session.get('time')
-            recurrence = session.get('recurrence', 'none').lower()
-            days_of_week_str = session.get('days_of_week', '')  # e.g., "Monday,Wednesday"
 
             # Parse date and time
             try:
@@ -211,47 +196,25 @@ def schedule_reminders(app):
                 logger.error(f"Error parsing datetime for session {session_id}: {e}")
                 continue
 
-            if recurrence == 'weekly' and days_of_week_str:
-                days_of_week = days_of_week_str.split(',')
-                day_crons = [day_name_to_cron(day) for day in days_of_week]
-                day_crons_str = ','.join(day_crons)
-
+            if session_datetime > datetime.now(TIMEZONE):
                 message = (
-                    f"🔔 Reminder: You have a training session today at {session_datetime.strftime('%H:%M')}!"
-                    f"\n📅 Recurrence: {recurrence.capitalize()}"
-                    f"\n📆 Days of Week: {days_of_week_str}"
+                    f"🔔 Напоминание: У вас тренировка {session_datetime.strftime('%Y-%m-%d')} в {session_datetime.strftime('%H:%M')}!"
                 )
 
                 scheduler.add_job(
                     send_reminder,
-                    trigger='cron',
-                    day_of_week=day_crons_str,
-                    hour=session_datetime.hour,
-                    minute=session_datetime.minute,
+                    trigger='date',
+                    run_date=session_datetime,
                     kwargs={'context': {'chat_id': chat_id, 'message': message}},
                 )
-                logger.info(f"Scheduled weekly reminder for chat_id {chat_id} for session {session_id}")
-            else:
-                if session_datetime > datetime.now(TIMEZONE):
-                    message = (
-                        f"🔔 Reminder: You have a training session on {session_datetime.strftime('%Y-%m-%d')} at {session_datetime.strftime('%H:%M')}!"
-                        f"\n📅 Recurrence: {recurrence.capitalize()}"
-                    )
-
-                    scheduler.add_job(
-                        send_reminder,
-                        trigger='date',
-                        run_date=session_datetime,
-                        kwargs={'context': {'chat_id': chat_id, 'message': message}},
-                    )
-                    logger.info(f"Scheduled one-time reminder for chat_id {chat_id} for session {session_id}")
+                logger.info(f"Scheduled one-time reminder for chat_id {chat_id} for session {session_id}")
 
     scheduler.start()
     logger.info("Reminder scheduler started.")
 
 async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Handles the /start command. Extracts the linking code if present.
+    Handles the /start command. Extracts the linking code if present and sends the main menu.
     """
     chat_id = update.effective_chat.id
     args = context.args  # This will contain the parameters passed to /start
@@ -262,10 +225,68 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Now, proceed to link the account using the linking code
         await process_linking_code(update, linking_code)
     else:
-        # No linking code provided, send a welcome message
-        await update.message.reply_text(
-            "Welcome! Your account is not linked with Telegram. Please request a linking code on the website and scan the QR code."
+        # No linking code provided, send a welcome message with the "Get Training Calendar" button
+        welcome_message = (
+            "Добро пожаловать! Ваш аккаунт не связан с Telegram. "
+            "Пожалуйста, запросите код привязки на сайте и отсканируйте QR-код."
         )
+        await update.message.reply_text(
+            welcome_message,
+            reply_markup=main_menu_keyboard()
+        )
+
+def main_menu_keyboard():
+    """
+    Returns the main menu keyboard with the "Get Training Calendar" button.
+    """
+    keyboard = [
+        [KeyboardButton("📅 Получить календарь тренировок")]
+    ]
+    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
+
+def link_menu_keyboard():
+    """
+    Returns a keyboard with options after linking.
+    """
+    keyboard = [
+        [KeyboardButton("📅 Получить календарь тренировок")]
+    ]
+    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
+
+async def handle_get_calendar(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handles the "Get Training Calendar" button press.
+    """
+    chat_id = update.effective_chat.id
+    user_id = get_user_id_from_chat_id(chat_id)
+
+    if not user_id:
+        await update.message.reply_text(
+            "❌ Ваш аккаунт не связан с Telegram. Пожалуйста, используйте /start с вашим кодом привязки."
+        )
+        return
+
+    sessions = fetch_training_sessions(user_id=user_id)
+
+    if not sessions:
+        await update.message.reply_text(
+            "📅 У вас нет предстоящих тренировок."
+        )
+        return
+
+    message = "📋 *Ваши тренировки:*\n\n"
+    for session in sessions:
+        #session_id = session.get('id', 'N/A')
+        date_str = session.get('date', 'N/A')
+        time_str = session.get('time', 'N/A')
+
+        message += (
+            #f"🔹 *ID:* {session_id}\n"
+            f"🔹 *Дата:* {date_str}\n"
+            f"🔹 *Время:* {time_str}\n\n"
+        )
+
+    await update.message.reply_text(message, parse_mode='Markdown')
 
 async def process_linking_code(update: Update, linking_code: str):
     """
@@ -287,62 +308,52 @@ async def process_linking_code(update: Update, linking_code: str):
             if user_id:
                 save_user_chat_id(chat_id, user_id)
                 await update.message.reply_text(
-                    "✅ Your account has been successfully linked with Telegram!"
+                    "✅ Ваш аккаунт успешно связан с Telegram!",
+                    reply_markup=link_menu_keyboard()
                 )
                 # Optionally, fetch and display the user's training sessions
                 sessions = fetch_training_sessions(user_id=user_id)
                 if sessions:
-                    message = "📋 Your training sessions:\n\n"
+                    message = "📋 *Ваши тренировки:*\n\n"
                     for session in sessions:
                         session_id = session.get('id', 'N/A')
                         date_str = session.get('date', 'N/A')
                         time_str = session.get('time', 'N/A')
-                        recurrence = session.get('recurrence', 'N/A')
-                        days_of_week = session.get('days_of_week', 'N/A')
 
-                        if recurrence.lower() == 'weekly' and days_of_week != 'N/A':
-                            message += (
-                                f"🔹 **ID:** {session_id}\n"
-                                f"🔹 **Date:** {date_str}\n"
-                                f"🔹 **Time:** {time_str}\n"
-                                f"🔹 **Recurrence:** {recurrence}\n"
-                                f"🔹 **Days of Week:** {days_of_week}\n\n"
-                            )
-                        else:
-                            message += (
-                                f"🔹 **ID:** {session_id}\n"
-                                f"🔹 **Date:** {date_str}\n"
-                                f"🔹 **Time:** {time_str}\n"
-                                f"🔹 **Recurrence:** {recurrence}\n\n"
-                            )
+                        message += (
+                            #f"🔹 *ID:* {session_id}\n"
+                            f"🔹 *Дата:* {date_str}\n"
+                            f"🔹 *Время:* {time_str}\n\n"
+                        )
                     await update.message.reply_text(message, parse_mode='Markdown')
-            else:
-                await update.message.reply_text(
-                    "❌ An error occurred while retrieving your user ID."
-                )
         else:
             await update.message.reply_text(
-                data.get('detail', '❌ Unknown error.')
+                data.get('detail', '❌ Неизвестная ошибка.'),
+                reply_markup=main_menu_keyboard()
             )
     except requests.HTTPError as e:
         if e.response.status_code == 400:
             data = e.response.json()
             await update.message.reply_text(
-                f"❌ Error: {data.get('detail', 'Invalid request.')}"
+                f"❌ Ошибка: {data.get('detail', 'Неверный запрос.')}",
+                reply_markup=main_menu_keyboard()
             )
         elif e.response.status_code == 404:
             await update.message.reply_text(
-                "❌ The endpoint for linking confirmation was not found."
+                "❌ Эндпоинт для подтверждения привязки не найден.",
+                reply_markup=main_menu_keyboard()
             )
         else:
             logger.error(f"Error linking Telegram: {e}")
             await update.message.reply_text(
-                "❌ An error occurred while linking. Please try again later."
+                "❌ Произошла ошибка при привязке. Пожалуйста, попробуйте позже.",
+                reply_markup=main_menu_keyboard()
             )
     except requests.RequestException as e:
         logger.error(f"Error linking Telegram: {e}")
         await update.message.reply_text(
-            "❌ An error occurred while linking. Please try again later."
+            "❌ Произошла ошибка при привязке. Пожалуйста, попробуйте позже.",
+            reply_markup=main_menu_keyboard()
         )
 
 def convert_chat_ids_to_dict():
@@ -367,6 +378,13 @@ def convert_chat_ids_to_dict():
     except Exception as e:
         logger.error(f"Unknown error converting {CHAT_IDS_FILE}: {e}")
 
+async def send_training_calendar(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handles the "Get Training Calendar" button press via callback query.
+    """
+    # This function is kept for future use if you decide to use InlineKeyboardMarkup
+    pass
+
 def main():
     """
     Main function to run the bot.
@@ -379,6 +397,15 @@ def main():
     # Handler for the /start command
     start_handler = CommandHandler("start", handle_start)
     application.add_handler(start_handler)
+
+    # Handler for the "Get Training Calendar" button
+    calendar_handler = MessageHandler(
+        filters.Regex("^📅 Получить календарь тренировок$"),
+        handle_get_calendar
+    )
+    application.add_handler(calendar_handler)
+
+    # Optionally, you can add other handlers here
 
     # Schedule reminders
     schedule_reminders(application)
