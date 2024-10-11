@@ -1,17 +1,17 @@
 // src/components/PostList.tsx
 
 import React from 'react';
-import { Post } from '../types';
+import { Post, UserData } from '../types';
 import PostItem from './PostItem';
-import { UserData } from '../types';
 
 interface PostListProps {
   posts: Post[];
-  userData: UserData;
+  userData?: UserData; // Made optional
   isDarkMode: boolean;
-  startEditing: (post: Post) => void;
-  showDeleteConfirmation: (id: number) => void;
-  // Removed addNewPost prop
+  startEditing?: (post: Post) => void; // Made optional
+  showDeleteConfirmation?: (id: number) => void; // Made optional
+  canEdit?: boolean;    // Optional prop to control edit button visibility globally
+  canDelete?: boolean;  // Optional prop to control delete button visibility globally
 }
 
 const PostList: React.FC<PostListProps> = ({
@@ -20,17 +20,20 @@ const PostList: React.FC<PostListProps> = ({
   isDarkMode,
   startEditing,
   showDeleteConfirmation,
+  canEdit = true,     // Defaults to true if not provided
+  canDelete = true,   // Defaults to true if not provided
 }) => {
   return (
-    <div className="max-w-4xl w-full p-10">
-      {/* Removed avatar, username, and addNewPost button */}
+    <div className="grid grid-cols-1 gap-6">
       {posts.map((post) => (
         <PostItem
           key={post.id}
           post={post}
           isDarkMode={isDarkMode}
-          startEditing={() => startEditing(post)}
-          showDeleteConfirmation={() => showDeleteConfirmation(post.id)}
+          startEditing={startEditing ? () => startEditing(post) : () => {}}
+          showDeleteConfirmation={showDeleteConfirmation ? () => showDeleteConfirmation(post.id) : () => {}}
+          canEdit={canEdit && userData?.id === post.profile.id}    // Ensure correct comparison
+          canDelete={canDelete && userData?.id === post.profile.id}
         />
       ))}
     </div>

@@ -18,7 +18,7 @@ from django.contrib.auth.models import User
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
-
+from  pamp_app.permissions import IsOwnerOrReadOnly
 
 
 #from datetime import timedelta
@@ -91,32 +91,64 @@ class ProfileViewSet(viewsets.ModelViewSet):
 
 
 class PostViewSet(viewsets.ModelViewSet):
-    queryset = Post.objects.all()
+    #queryset = Post.objects.all()
+    #serializer_class = PostSerializer
+    #permission_classes = [permissions.IsAuthenticated]
+
+    queryset = Post.objects.all().order_by('-created_at')
     serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
+
+
+
+ #    def perform_create(self, serializer):
+ #        instance = serializer.save()
+ #        for image in instance.images.all():
+ #            if image.image:
+ #                print(f"Image saved at: {image.image.path}")
+ #                print(f"Image URL: {image.image.url}")
+ #            elif image.image_url:
+ #                print(f"Image URL: {image.image_url}")
+ #            else:
+ #                print("No image file or URL provided.")
+
+ #        for video in instance.videos.all():
+ #            if video.video:
+ #                print(f"Video saved at: {video.video.path}")
+ #                print(f"Video URL: {video.video.url}")
+ #            elif video.video_url:
+ #                print(f"Video URL: {video.video_url}")
+ #            else:
+ #                print("No video file or URL provided.")
+ # 
+    # def get_queryset(self):
+    #     return Post.objects.filter(profile__user=self.request.user)
+
+
+
+    def get_queryset(self):
+        """
+        Optionally restricts the returned posts to the current user,
+        by filtering against a `mine` query parameter in the URL.
+        """
+        queryset = Post.objects.all().order_by('-created_at')
+        mine = self.request.query_params.get('mine')
+        exclude_mine = self.request.query_params.get('exclude_mine')
+
+
+        if mine == 'true':
+            queryset = queryset.filter(profile__user=self.request.user)
+
+        elif exclude_mine == 'true':
+            queryset = queryset.exclude(profile=self.request.user.profile)
+            
+        return queryset
+
 
     def perform_create(self, serializer):
-        instance = serializer.save()
-        for image in instance.images.all():
-            if image.image:
-                print(f"Image saved at: {image.image.path}")
-                print(f"Image URL: {image.image.url}")
-            elif image.image_url:
-                print(f"Image URL: {image.image_url}")
-            else:
-                print("No image file or URL provided.")
+        serializer.save(profile=self.request.user.profile)
 
-        for video in instance.videos.all():
-            if video.video:
-                print(f"Video saved at: {video.video.path}")
-                print(f"Video URL: {video.video.url}")
-            elif video.video_url:
-                print(f"Video URL: {video.video_url}")
-            else:
-                print("No video file or URL provided.")
- 
-    def get_queryset(self):
-        return Post.objects.filter(profile__user=self.request.user)
+
 
 
 

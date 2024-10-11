@@ -1,14 +1,16 @@
-import axios, { AxiosResponse } from 'axios';
-import { MediaItem , Post , Profile, TrainingSession } from '../types';
+// src/services/api.ts
 
-export const API_URL =  'http://localhost:8000/api/';
+import axios, { AxiosResponse } from 'axios';
+import { MediaItem, Post, Profile, TrainingSession } from '../types';
+
+export const API_URL = 'http://localhost:8000/api/';
 
 export const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true,//куки
+  withCredentials: true, // куки
 });
 
-// Перехватчик запросов для добавления токенов
+// Request interceptor to add access tokens
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken');
@@ -22,23 +24,27 @@ api.interceptors.request.use(
   }
 );
 
-// Функции API
+// API Functions
 export const getProfile = () => api.get('/user-profile/');
 export const updateProfile = (data: FormData) => api.put('/profiles/me/', data);
-export const getPosts = () => api.get('/posts/');
+
+// Updated to accept query parameters
+export const getMyPosts = (params?: any): Promise<AxiosResponse<Post[]>> =>
+  api.get('/posts/', { params: { mine: 'true', ...params } });
+
+export const getAllPosts = (params?: any): Promise<AxiosResponse<Post[]>> =>
+  api.get('/posts/', { params: { ...params } });
+
 export const createPost = (data: FormData) => api.post('/posts/', data);
 export const updatePost = (id: number, data: FormData) => api.put(`/posts/${id}/`, data);
 export const deletePost = (id: number) => api.delete(`/posts/${id}/`);
 
-// Функции для регистрации и получения токенов
+// Registration and Token Functions
 export const register = (data: any) => api.post('/register/', data);
 export const obtainToken = (data: any) => api.post('/token/', data);
-
-// Обновление токенов
 export const refreshToken = (refresh: string) => api.post('/token/refresh/', { refresh });
 
-
-//TrainingSession
+// TrainingSession Functions
 export const getTrainingSessions = (): Promise<AxiosResponse<TrainingSession[]>> =>
   api.get(`/training-sessions/`);
 
@@ -54,13 +60,11 @@ export const updateTrainingSession = (
 export const deleteTrainingSession = (id: number): Promise<AxiosResponse<void>> =>
   api.delete(`/training-sessions/${id}/`);
 
-
-// Функция для генерации кода связывания с Telegram
+// Telegram Linking Functions
 export const linkTelegram = () => {
   return api.post('/link-telegram/');
 };
 
-// Функция для проверки статуса связывания
 export const checkTelegramLink = () => {
   return api.get('/link-telegram/status/');
 };

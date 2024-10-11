@@ -8,7 +8,7 @@ import {
   UserData,
 } from '../types';
 import {
-  getPosts,
+  getMyPosts,
   createPost,
   updatePost,
   deletePost,
@@ -34,7 +34,7 @@ import QRCode from 'react-qr-code';
 const BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
 
 const HomePage: React.FC = () => {
-  // Existing state variables
+  // State variables
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [posts, setPosts] = useState<ExtendedPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,7 +53,7 @@ const HomePage: React.FC = () => {
   });
   const [isEditingProfilePicture, setIsEditingProfilePicture] = useState(false);
 
-  // New state variables for Telegram linking
+  // Telegram linking state variables
   const [isLinkingTelegram, setIsLinkingTelegram] = useState(false);
   const [linkingCode, setLinkingCode] = useState<string | null>(null);
   const [linkingError, setLinkingError] = useState<string | null>(null);
@@ -74,6 +74,7 @@ const HomePage: React.FC = () => {
     }
   }, []);
 
+  // Fetch user profile data
   const fetchUserProfile = useCallback(async () => {
     try {
       const response = await getProfile();
@@ -92,11 +93,12 @@ const HomePage: React.FC = () => {
     }
   }, []);
 
+  // Fetch only the authenticated user's posts
   const fetchPosts = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await getPosts();
+      const response = await getMyPosts();
       setPosts(
         response.data.map((post: Post) => ({
           ...post,
@@ -105,13 +107,14 @@ const HomePage: React.FC = () => {
         }))
       );
     } catch (err) {
-      setError('Failed to load posts. Please try again later.');
+      setError('Failed to load your posts. Please try again later.');
       console.error('Error loading posts:', err);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
+  // Initial data fetching
   useEffect(() => {
     if (user) {
       fetchPosts();
@@ -122,6 +125,7 @@ const HomePage: React.FC = () => {
     }
   }, [fetchPosts, fetchUserProfile, fetchTelegramLinkStatus, user, navigate]);
 
+  // Handle post deletion
   const handleDeletePost = async (id: number) => {
     try {
       await deletePost(id);
@@ -134,11 +138,13 @@ const HomePage: React.FC = () => {
     }
   };
 
+  // Handle post editing
   const handleStartEditing = (post: ExtendedPost) => {
     setIsEditing(true);
     setEditingPost({ ...post });
   };
 
+  // Handle adding a new post
   const handleAddNewPost = () => {
     setIsCreating(true);
     setEditingPost({
@@ -161,6 +167,7 @@ const HomePage: React.FC = () => {
     });
   };
 
+  // Handle saving a post (both create and update)
   const handleSavePost = async () => {
     if (editingPost) {
       const formData = new FormData();
@@ -245,6 +252,7 @@ const HomePage: React.FC = () => {
     }
   };
 
+  // Handle input changes in the edit/create post form
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (editingPost) {
       setEditingPost({
@@ -254,6 +262,7 @@ const HomePage: React.FC = () => {
     }
   };
 
+  // Handle file input changes in the edit/create post form
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && editingPost) {
       const files = Array.from(e.target.files);
@@ -282,6 +291,7 @@ const HomePage: React.FC = () => {
     }
   };
 
+  // Handle removing media items (images/videos) from the edit/create post form
   const handleRemoveMedia = (type: 'image' | 'video', mediaItem: ExtendedMediaItem) => {
     if (editingPost) {
       if (type === 'image') {
@@ -298,6 +308,7 @@ const HomePage: React.FC = () => {
     }
   };
 
+  // Handle adding media URLs (images/videos) to the edit/create post form
   const handleAddMediaUrl = (type: 'image' | 'video', url: string) => {
     if (editingPost) {
       if (type === 'image') {
@@ -328,10 +339,12 @@ const HomePage: React.FC = () => {
     }
   };
 
+  // Handle drag over event for file uploads
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
   };
 
+  // Handle drop event for file uploads
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0 && editingPost) {
@@ -361,6 +374,7 @@ const HomePage: React.FC = () => {
     }
   };
 
+  // Handle saving the profile picture
   const handleSaveProfilePicture = async (newProfilePicture: File | null) => {
     const formData = new FormData();
     if (newProfilePicture) {
@@ -379,7 +393,7 @@ const HomePage: React.FC = () => {
     }
   };
 
-  // New function to generate the Telegram linking code
+  // Function to generate the Telegram linking code
   const handleLinkTelegram = async () => {
     try {
       const response = await linkTelegram(); // API call to generate the code
@@ -392,7 +406,7 @@ const HomePage: React.FC = () => {
     }
   };
 
-  // Class for buttons
+  // Button styling class
   const buttonClass =
     'w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-xl text-gray-600 hover:bg-gray-400 transition-colors duration-300';
 
@@ -405,6 +419,11 @@ const HomePage: React.FC = () => {
         </Link>
         <Link to="/calendar" className="mb-4 text-gray-800 dark:text-white">
           Training Calendar
+        </Link>
+
+        {/* New Link to All Users' Posts */}
+        <Link to="/all-posts" className="mb-4 text-gray-800 dark:text-white">
+          All Posts
         </Link>
 
         {/* "Link with Telegram" Button */}
@@ -424,6 +443,7 @@ const HomePage: React.FC = () => {
           </div>
         )}
 
+        {/* Logout or Login Button */}
         {user ? (
           <button onClick={logout} className="mt-auto p-2 bg-red-500 text-white rounded">
             Logout
@@ -442,7 +462,7 @@ const HomePage: React.FC = () => {
         {user ? (
           <>
             <div className="max-w-4xl w-full p-10">
-              {/* Avatar and Username above posts */}
+              {/* User Avatar and Username */}
               <div className="flex items-center mb-6 mt-6 relative">
                 {userData.profilePicture ? (
                   <img
@@ -466,6 +486,7 @@ const HomePage: React.FC = () => {
                 <h2 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                   {userData.username}
                 </h2>
+                {/* Add New Post Button */}
                 <button
                   className={`absolute top-2 right-2 ${buttonClass}`}
                   aria-label="Add new post"
@@ -475,15 +496,19 @@ const HomePage: React.FC = () => {
                 </button>
               </div>
 
-              {/* Rest of the content */}
-              <DarkModeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
-              <SearchBar
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                isDarkMode={isDarkMode}
-              />
+              {/* Dark Mode Toggle and Search Bar */}
+              <div className="flex items-center justify-between mb-4">
+                <DarkModeToggle isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+                <SearchBar
+                  searchTerm={searchTerm}
+                  setSearchTerm={setSearchTerm}
+                  isDarkMode={isDarkMode}
+                />
+              </div>
+
+              {/* Posts List */}
               {isLoading ? (
-                <p>Loading posts...</p>
+                <p>Loading your posts...</p>
               ) : error ? (
                 <p className="text-red-500">{error}</p>
               ) : (
@@ -496,11 +521,13 @@ const HomePage: React.FC = () => {
                     setShowDeleteDialog(true);
                     setPostToDelete(id);
                   }}
+                  canEdit={true}    // Allow editing
+                  canDelete={true}  // Allow deleting
                 />
               )}
             </div>
 
-            {/* Delete Post Dialog */}
+            {/* Delete Post Confirmation Dialog */}
             {showDeleteDialog && (
               <DeleteDialog
                 isDarkMode={isDarkMode}
@@ -509,7 +536,7 @@ const HomePage: React.FC = () => {
               />
             )}
 
-            {/* Edit/Create Post Dialog */}
+            {/* Edit or Create Post Dialog */}
             {(isEditing || isCreating) && editingPost && (
               <EditPostDialog
                 isDarkMode={isDarkMode}
@@ -541,6 +568,7 @@ const HomePage: React.FC = () => {
             )}
           </>
         ) : (
+          // If the user is not authenticated
           <div className="flex flex-col items-center justify-center h-full">
             <h2 className="text-2xl mb-4 text-gray-800 dark:text-white">Welcome!</h2>
             <p className="mb-6 text-gray-600 dark:text-gray-300">
@@ -555,13 +583,14 @@ const HomePage: React.FC = () => {
         )}
       </div>
 
-      {/* Modal for linking with Telegram */}
+      {/* Modal for Telegram Linking */}
       {isLinkingTelegram && linkingCode && (
         <Modal onClose={() => setIsLinkingTelegram(false)}>
           <h2 className="text-2xl mb-4">Link with Telegram</h2>
           <p>To link your account with Telegram, follow these steps:</p>
           <ol className="list-decimal list-inside mt-2">
             <li>Scan the QR code below with your phone.</li>
+            <li>Open the Telegram bot that appears after scanning.</li>
           </ol>
           <div className="mt-4 flex justify-center">
             <QRCode
@@ -586,4 +615,3 @@ const HomePage: React.FC = () => {
 };
 
 export default HomePage;
-

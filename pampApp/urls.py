@@ -40,7 +40,7 @@ from rest_framework_simplejwt.views import (
 
 router = DefaultRouter()
 router.register(r'profiles', views.ProfileViewSet, basename='profile')
-router.register(r'posts', views.PostViewSet) 
+router.register(r'posts', views.PostViewSet,basename='posts') 
 router.register(r'training-sessions', views.TrainingSessionViewSet, basename='training-session')
 
 urlpatterns = [
