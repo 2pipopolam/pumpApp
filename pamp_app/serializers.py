@@ -114,6 +114,7 @@ class TrainingSessionSerializer(serializers.ModelSerializer):
 
 
 
+
 class PostSerializer(serializers.ModelSerializer):
     images = PostImageSerializer(many=True, required=False)
     videos = PostVideoSerializer(many=True, required=False)
@@ -121,8 +122,11 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['id', 'title', 'images', 'videos', 'training_type', 'description', 'views', 'created_at', 'updated_at', 'profile']
-
+        fields = [
+            'id', 'title', 'images', 'videos', 
+            'training_type', 'description', 'views', 
+            'created_at', 'updated_at', 'profile'
+        ]
 
     def create(self, validated_data):
         images_data = self.context['request'].FILES.getlist('images')
@@ -130,9 +134,10 @@ class PostSerializer(serializers.ModelSerializer):
         videos_data = self.context['request'].FILES.getlist('videos')
         videos_url_data = self.context['request'].data.getlist('video_urls')
 
-        profile = self.context['request'].user.profile
-        post = Post.objects.create(profile=profile, **validated_data)
+        # Remove 'profile' from validated_data as it's handled by the view
+        profile = validated_data.pop('profile')
 
+        post = Post.objects.create(profile=profile, **validated_data)
 
         for image_data in images_data:
             PostImage.objects.create(post=post, image=image_data)
@@ -147,6 +152,7 @@ class PostSerializer(serializers.ModelSerializer):
             PostVideo.objects.create(post=post, video_url=video_url)
 
         return post
+
 
 
     def update(self, instance, validated_data):
@@ -189,6 +195,17 @@ class PostSerializer(serializers.ModelSerializer):
 
 
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        request = self.context.get('request')
+
+        if request and instance.profile.user == request.user:
+            # Omit 'profile' fields
+            representation.pop('profile', None)
+            # Alternatively, you can set them to None or some placeholder
+            # representation['profile'] = None
+
+        return representation
 
 
 class GoogleLoginSerializer(serializers.Serializer):

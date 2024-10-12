@@ -410,6 +410,10 @@ const HomePage: React.FC = () => {
   const buttonClass =
     'w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-xl text-gray-600 hover:bg-gray-400 transition-colors duration-300';
 
+  // Dummy functions for disabling edit and delete in AllPostsPage or similar scenarios
+  const dummyStartEditing = () => {};
+  const dummyShowDeleteConfirmation = () => {};
+
   return (
     <div className="flex">
       {/* Navigation Panel */}
@@ -514,7 +518,6 @@ const HomePage: React.FC = () => {
               ) : (
                 <PostList
                   posts={posts}
-                  userData={userData}
                   isDarkMode={isDarkMode}
                   startEditing={handleStartEditing}
                   showDeleteConfirmation={(id: number) => {

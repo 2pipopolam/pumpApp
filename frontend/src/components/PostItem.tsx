@@ -8,8 +8,8 @@ interface PostItemProps {
   isDarkMode: boolean;
   startEditing: () => void;
   showDeleteConfirmation: () => void;
-  canEdit: boolean;    // New prop to control edit button visibility
-  canDelete: boolean;  // New prop to control delete button visibility
+  canEdit: boolean;
+  canDelete: boolean;
 }
 
 const PostItem: React.FC<PostItemProps> = ({
@@ -53,23 +53,25 @@ const PostItem: React.FC<PostItemProps> = ({
       )}
 
       {/* Post Header with Profile Information */}
-      <div className="flex items-center mb-4">
-        {post.profile.avatar ? (
-          <img
-            src={`${post.profile.avatar}?t=${Date.now()}`} // Cache busting
-            alt={`${post.profile.username}'s avatar`}
-            className="w-12 h-12 rounded-full mr-4 object-cover"
-            onError={(e) => {
-              e.currentTarget.src = '/path/to/default/avatar.png';
-            }}
-          />
-        ) : (
-          <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center mr-4">
-            <span className="text-gray-700">A</span>
-          </div>
-        )}
-        <span className="font-semibold">{post.profile.username}</span>
-      </div>
+      {post.profile && (
+        <div className="flex items-center mb-4">
+          {post.profile.avatar ? (
+            <img
+              src={`${post.profile.avatar}?t=${Date.now()}`} // Cache busting
+              alt={`${post.profile.username}'s avatar`}
+              className="w-12 h-12 rounded-full mr-4 object-cover"
+              onError={(e) => {
+                e.currentTarget.src = '/path/to/default/avatar.png';
+              }}
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center mr-4">
+              <span className="text-gray-700">A</span>
+            </div>
+          )}
+          <span className="font-semibold">{post.profile.username}</span>
+        </div>
+      )}
 
       {/* Post Content */}
       <h2 className="text-2xl font-bold mb-4">{post.title}</h2>

@@ -1,7 +1,7 @@
 // src/pages/AllPostsPage.tsx
 
 import React, { useState, useEffect, useCallback, useContext } from 'react';
-import { ExtendedPost, UserData } from '../types';
+import { ExtendedPost } from '../types';
 import { getAllPosts } from '../services/api';
 import PostList from '../components/PostList';
 import { AuthContext } from '../contexts/AuthContext';
@@ -57,6 +57,8 @@ const AllPostsPage: React.FC = () => {
               isDarkMode={false} // Adjust as needed or pass as a prop
               canEdit={false} // Disable edit/delete buttons
               canDelete={false}
+              startEditing={() => {}} // Dummy function
+              showDeleteConfirmation={() => {}} // Dummy function
             />
           )}
         </div>

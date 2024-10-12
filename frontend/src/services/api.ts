@@ -32,8 +32,11 @@ export const updateProfile = (data: FormData) => api.put('/profiles/me/', data);
 export const getMyPosts = (params?: any): Promise<AxiosResponse<Post[]>> =>
   api.get('/posts/', { params: { mine: 'true', ...params } });
 
+
 export const getAllPosts = (params?: any): Promise<AxiosResponse<Post[]>> =>
-  api.get('/posts/', { params: { ...params } });
+  api.get('/posts/', { params: { exclude_mine:true } });
+
+
 
 export const createPost = (data: FormData) => api.post('/posts/', data);
 export const updatePost = (id: number, data: FormData) => api.put(`/posts/${id}/`, data);
