@@ -45,7 +45,7 @@ SECRET_KEY = 'django-insecure-)lu=yhos5vgu66lp3co!cnm2x!xl1aw)lg25^arp7t0fj&-fqy
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['pumpapp.com', 'localhost', '0.0.0.0', '127.0.0.1']
+ALLOWED_HOSTS = ['pumpapp.com', 'localhost', '0.0.0.0', '127.0.0.1', '[::1]', 'web', 'web:8000', 'web:3000']
 
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
@@ -56,6 +56,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8000",
     "http://127.0.0.1:8080",
     "http://pumpapp.com:3000",
+    "http://web:8000",
+    "http://web:3000"
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -65,6 +67,8 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:3000',
     'http://localhost:8000',
     'http://localhost:8080',
+    'http://web:8000',
+    "http://web:3000"
 ]
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
@@ -146,7 +150,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.postgres',
     'django.contrib.sites',
-    
+
     # Third party apps
     'rest_framework',
     'corsheaders',
@@ -159,7 +163,7 @@ INSTALLED_APPS = [
     'dj_rest_auth.registration',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-    
+
     # Local apps
     'pamp_app',
 ]

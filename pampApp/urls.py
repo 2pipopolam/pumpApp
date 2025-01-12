@@ -15,7 +15,8 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-
+from django.http import JsonResponse,HttpResponse
+from rest_framework.decorators import api_view, permission_classes
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
@@ -34,17 +35,18 @@ from rest_framework_simplejwt.views import (
 
 
 
-
 #from pamp_app.views import FileUploadView
-
 
 router = DefaultRouter()
 router.register(r'profiles', views.ProfileViewSet, basename='profile')
-router.register(r'posts', views.PostViewSet,basename='posts') 
+router.register(r'posts', views.PostViewSet,basename='posts')
 router.register(r'training-sessions', views.TrainingSessionViewSet, basename='training-session')
 
 urlpatterns = [
-    path('admin/', admin.site.urls),     
+    #admin
+    path('admin/', admin.site.urls),
+
+    #api
     path('api/', include(router.urls)),
     path('api/user-profile/', views.user_profile, name='user-profile'),
     path('api/user-posts/', views.user_posts, name='user-posts'),
@@ -53,11 +55,15 @@ urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
-    
+    #health
+    path('api/health/', lambda request: HttpResponse(status=200), name='health_check'),
+
+
     path('auth/', include('dj_rest_auth.urls')),
+
+    #google
     path('auth/google/', include('allauth.socialaccount.urls')),
     path('auth/google/callback/', views.google_callback, name='google_callback'),
-
     path('auth/google/login/', GoogleLogin.as_view(), name='google_login'),
 
 

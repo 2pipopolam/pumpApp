@@ -1,31 +1,35 @@
 #!/bin/bash
 set -e
 
-echo "Checking installed Python packages..."
-pip freeze
-
-echo "Waiting for PostgreSQL..."
-while ! pg_isready -h $DB_HOST -p $DB_PORT -U $DB_USER; do
-    echo "PostgreSQL is unavailable - sleeping"
-    sleep 1
+# wait for database
+while ! nc -z $DB_HOST $DB_PORT; do
+  echo "Waiting for database..."
+  sleep 1
 done
-echo "PostgreSQL is up and running!"
 
-echo "Building React application..."
-cd frontend
-npm install
-npm run build
-cd ..
+echo "Database is available"
 
-echo "Running migrations..."
+mkdir -p /app/media
+mkdir -p /app/static
+mkdir -p /app/frontend/build/static
+
+chown -R www-data:www-data /app/media /app/static
+chmod -R 755 /app/media /app/static
+
 python manage.py migrate
 
-echo "Collecting static files..."
+# frontend dependencies and start development server
+if [ "$SERVICE_NAME" = "web" ]; then
+    echo "Setting up frontend..."
+    cd /app/frontend
+    npm install
+    # start react development server in the background
+    npm start &
+    cd /app
+fi
+
+# collect static files
 python manage.py collectstatic --noinput
 
-echo "Starting Django server..."
-python manage.py runserver 0.0.0.0:8000 &
-
-echo "Starting React development server..."
-cd frontend
-npm start
+# start django development server
+python manage.py runserver 0.0.0.0:8000
