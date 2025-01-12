@@ -18,29 +18,61 @@ from corsheaders.defaults import default_headers
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Static files (CSS, JavaScript, Images)
+STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'frontend', 'build', 'static'),
+]
+
+# Media files
 MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
+# React build directory
+REACT_APP_BUILD_PATH = os.path.join(BASE_DIR, 'frontend', 'build')
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-)lu=yhos5vgu66lp3co!cnm2x!xl1aw)lg25^arp7t0fj&-fqy'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ['pumpapp.com','localhost','0.0.0.0', '127.0.0.1']
-
-
-CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000', 
+STATICFILES_DIRS = [
+    os.path.join(REACT_APP_BUILD_PATH, 'static'),
 ]
 
 
-#AUTHENTICATION_
+
+# Quick-start development settings - unsuitable for production
+SECRET_KEY = 'django-insecure-)lu=yhos5vgu66lp3co!cnm2x!xl1aw)lg25^arp7t0fj&-fqy'
+
+DEBUG = True
+
+ALLOWED_HOSTS = ['pumpapp.com', 'localhost', '0.0.0.0', '127.0.0.1']
+
+# CORS settings
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "http://localhost:8080",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:8000",
+    "http://127.0.0.1:8080",
+    "http://pumpapp.com:3000",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:8000',
+    'http://localhost:8080',
+]
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'authorization',
+    'content-type',
+]
+
+# Authentication settings
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'pamp_app.authentication.EmailAuthBackend',
@@ -48,31 +80,22 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-#GOOGLE OAUTH2
+# Google OAuth2 settings
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config('GOOGLE_OAUTH2_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config('GOOGLE_OAUTH2_SECRET')
-
-
-SOCIALACCOUNT_ADAPTER = 'pamp_app.adapters.MySocialAccountAdapter'
-AUTH_USER_MODEL = 'auth.User'
-ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_USERNAME_REQUIRED = False
-SOCIALACCOUNT_AUTO_SIGNUP = True  
-
-
-# SOCIALACCOUNT_ADAPTER = 'allauth.socialaccount.adapter.DefaultSocialAccountAdapter'
-
-# ACCOUNT_EMAIL_VERIFICATION = 'none'
-# ACCOUNT_EMAIL_REQUIRED = False
-
-
-
 
 if not SOCIAL_AUTH_GOOGLE_OAUTH2_KEY or not SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET:
     raise ValueError("Google OAuth2 credentials are missing in environment variables")
 
-
-
+# Django Allauth settings
+SOCIALACCOUNT_ADAPTER = 'pamp_app.adapters.MySocialAccountAdapter'
+AUTH_USER_MODEL = 'auth.User'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+SOCIALACCOUNT_AUTO_SIGNUP = True
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
@@ -90,41 +113,17 @@ SOCIALACCOUNT_PROVIDERS = {
 
 SITE_ID = 1
 
-
-
-#SOCIAL AUTH
-# SOCIAL_AUTH_PIPELINE = [
-#     'social_core.pipeline.social_auth.social_details',
-#     'social_core.pipeline.social_auth.social_uid',
-#     'social_core.pipeline.social_auth.auth_allowed',
-#     'social_core.pipeline.social_auth.social_user',
-#     'social_core.pipeline.user.get_username',
-#     'social_core.pipeline.user.create_user',
-#     'pamp_app.authentication.create_profile',
-#     'social_core.pipeline.social_auth.associate_user',
-#     'social_core.pipeline.social_auth.load_extra_data',
-#     'social_core.pipeline.user.user_details',
-# ]
-
-
-
-# Настройки JWT
-
+# JWT settings
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
 
-
-
-
-# REST Framework настройки
+# Django REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'dj_rest_auth.jwt_auth.JWTCookieAuthentication',
-
-        #'rest_framework_api_key.authentication.ApiKeyAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
@@ -132,7 +131,10 @@ REST_FRAMEWORK = {
     ),
 }
 
-
+# dj-rest-auth settings
+REST_USE_JWT = True
+JWT_AUTH_COOKIE = 'my-app-auth'
+JWT_AUTH_REFRESH_COOKIE = 'my-refresh-token'
 
 # Application definition
 INSTALLED_APPS = [
@@ -142,63 +144,44 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.postgres',   
+    'django.contrib.postgres',
+    'django.contrib.sites',
+    
+    # Third party apps
     'rest_framework',
     'corsheaders',
     'django_extensions',
-
     'rest_framework.authtoken',
     'rest_framework_api_key',
-
-    'pamp_app',
-
-
-    'django.contrib.sites',
     'dj_rest_auth',
     'allauth',
     'allauth.account',
     'dj_rest_auth.registration',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    
+    # Local apps
+    'pamp_app',
 ]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    
     'allauth.account.middleware.AccountMiddleware',
 ]
-
-
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://pumpapp.com:3000",
-]
-
-#для cookies
-CORS_ALLOW_CREDENTIALS = True
-
-
-# Разрешить определённые заголовки
-CORS_ALLOW_HEADERS = list(default_headers) + [
-    'authorization',
-    'content-type',
-]
-
 
 ROOT_URLCONF = 'pampApp.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR,'frontend/build')],
+        'DIRS': [os.path.join(BASE_DIR, 'frontend', 'build')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -213,35 +196,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'pampApp.wsgi.application'
 
-
-
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-'''
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-'''
-
-
-# с sqlite3 на postgresql
-'''
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'your_database_name',
-        'USER': 'your_database_user',
-        'PASSWORD': 'your_database_password',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
-}
-'''
-
-
+# Database settings
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -249,15 +204,11 @@ DATABASES = {
         'USER': config('DB_USER'),
         'PASSWORD': config('DB_PASSWORD'),
         'HOST': config('DB_HOST'),
+        'PORT': config('DB_PORT', default='5432'),
     }
 }
 
-
-
-
-# Password validation
-# https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
-
+# Password validation settings
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -273,33 +224,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
-# https://docs.djangoproject.com/en/5.1/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
-
-STATIC_URL = 'static/'
-
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR,'frontend')
-]
-
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-# print("GOOGLE_OAUTH2_KEY:", SOCIAL_AUTH_GOOGLE_OAUTH2_KEY)
-# print("GOOGLE_OAUTH2_SECRET:", SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET)

@@ -35,7 +35,7 @@ const RegistrationPage: React.FC = () => {
       const response = await register(formData);
       login(response.data.access, response.data.refresh, response.data.user);
       navigate('/');
-    } catch (err) {
+    } catch (err: any) {
       setError(err.response?.data?.detail || 'Произошла ошибка при регистрации.');
     }
   };

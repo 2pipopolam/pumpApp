@@ -1,14 +1,23 @@
-#DJANGO BACKEND DEPENDS
-pillow==10.4.0
-psycopg2==2.9.9
-python-decouple==3.8
+# Django and DRF
+Django==5.1.1
+djangorestframework==3.15.2
 django-cors-headers==4.4.0
-asgiref==3.8.1                                                                                                                                                                                                                               
-django==5.1.1                                                                                                                                                                                                                                
-djangorestframework==3.15.2                                                                                                                                                                                                                  
-sqlparse==0.5.1   
+python-decouple==3.8
+asgiref==3.8.1
+sqlparse==0.5.1
 
-#AUTHs
+# Database
+psycopg2==2.9.9
+pillow==10.4.0
+
+# Authentication
+dj-rest-auth==5.0.1
+django-allauth==0.57.0
+djangorestframework-simplejwt==5.3.1
+social-auth-app-django==5.4.2
+social-auth-core==4.5.4
+
+# Security
 cffi==1.17.1
 cryptography==43.0.1
 defusedxml==0.7.1
@@ -20,18 +29,13 @@ pyjwt==2.9.0
 pyopenssl==24.2.1
 python3-openid==3.2.0
 requests-oauthlib==2.0.0
-social-auth-app-django==5.4.2
-social-auth-core==4.5.4
 werkzeug==3.0.4
-djangorestframework-simplejwt==5.3.1
 
-#TELEGRAM BOT DEPENDS
+# Telegram Bot
 requests
-python-telegram-bot
-APScheduler
-pytz
-python-dotenv
-httpx
-djangorestframework-api-key
-
-logging
+python-telegram-bot==21.10
+APScheduler==3.11.0
+pytz==2024.2
+python-dotenv==1.0.1
+httpx==0.28.1
+djangorestframework-api-key==3.0.0

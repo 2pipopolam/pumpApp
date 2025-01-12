@@ -82,12 +82,12 @@ const TrainingCalendar: React.FC<TrainingCalendarProps> = ({ isDarkMode }) => {
         endAccessor="end"
         style={{ height: 600 }}
         views={['month', 'week', 'day']}
-        eventPropGetter={(event) => ({
+        eventPropGetter={(event: CalendarEvent) => ({
           style: {
-            backgroundColor: isDarkMode ? '#1a202c' : '#3182ce',
-            color: 'white',
-          },
-        })}
+          	backgroundColor: isDarkMode ? '#1a202c' : '#3182ce',
+    		color: 'white',
+  	   },
+	})}
       />
       {showDialog && selectedSlot && !selectedEvent && (
         <TrainingSessionDialog
